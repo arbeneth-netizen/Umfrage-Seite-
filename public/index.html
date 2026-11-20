@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wer würde am ehesten – Host</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ EINRICHTUNG ============ -->
+  <section id="setup">
+    <h1>Anonyme Abstimmung 🗳️</h1>
+    <p class="sub">Richte das Spiel ein, starte die Lobby – alle scannen den QR-Code und stimmen anonym ab.</p>
+
+    <div class="card">
+      <h2>1. Überschrift</h2>
+      <input type="text" id="title" maxlength="120" placeholder="z. B. Mannschaftsabend 2026 🍻" />
+    </div>
+
+    <div class="card">
+      <h2>2. Antwortmöglichkeiten (Namen) <small id="nameCount"></small></h2>
+      <form id="nameForm" class="row">
+        <input type="text" id="nameInput" maxlength="40" placeholder="Name eingeben und Enter drücken" autocomplete="off" />
+        <button type="submit">Hinzufügen</button>
+      </form>
+      <div class="toolbar">
+        <button type="button" class="ghost small" id="pasteNames">Mehrere auf einmal einfügen</button>
+        <button type="button" class="ghost small" id="clearNames">Alle Namen löschen</button>
+      </div>
+      <div id="chips" class="chips"></div>
+    </div>
+
+    <div class="card">
+      <h2>3. Fragen <small id="qCount"></small></h2>
+      <form id="qForm" class="row">
+        <input type="text" id="qInput" maxlength="200" placeholder="Eigene Frage eintragen, z. B. Wer würde am ehesten …?" autocomplete="off" />
+        <button type="submit">Hinzufügen</button>
+      </form>
+
+      <div class="spacer"></div>
+      <h2 style="font-size:16px">Ausgewählt für dieses Spiel</h2>
+      <p class="muted" id="noSelected" style="margin:0">Noch keine Frage ausgewählt – hake unten Vorschläge an oder trag eigene ein.</p>
+      <ul id="selectedList" class="q-list selected-list"></ul>
+      <div class="toolbar">
+        <button type="button" class="ghost small" id="shuffleSel">Reihenfolge mischen</button>
+        <button type="button" class="ghost small" id="clearSel">Auswahl leeren</button>
+      </div>
+
+      <div class="spacer"></div>
+      <h2 style="font-size:16px">Vorschläge &amp; deine Fragen</h2>
+      <div class="toolbar">
+        <button type="button" class="ghost small" id="random10">🎲 10 zufällige auswählen</button>
+        <button type="button" class="ghost small" id="selectAll">Alle auswählen</button>
+      </div>
+      <ul id="suggestList" class="q-list"></ul>
+    </div>
+
+    <button class="big" id="startLobby">Lobby starten</button>
+    <p class="err" id="setupErr"></p>
+  </section>
+
+  <!-- ============ SPIEL ============ -->
+  <section id="game" class="hidden">
+    <h1 id="gTitle"></h1>
+    <p class="sub" id="gSub"></p>
+
+    <!-- Lobby -->
+    <div id="vLobby" class="card hidden">
+      <div class="lobby">
+        <div class="qr"><img id="qrImg" alt="QR-Code zum Beitreten" /></div>
+        <div>
+          <div class="q-head">QR-Code scannen zum Mitmachen</div>
+          <div class="muted" style="margin-top:8px">oder Code eingeben:</div>
+          <div class="code" id="lobbyCode"></div>
+          <div class="link" id="lobbyLink"></div>
+          <div class="spacer"></div>
+          <div class="big-num" id="lobbyPlayers">0</div>
+          <div class="muted">Spieler beigetreten</div>
+          <div class="spacer"></div>
+          <button class="big" id="startGame">Spiel starten ▶</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Abstimmung -->
+    <div id="vVoting" class="card hidden">
+      <div class="q-head" id="vqHead"></div>
+      <div class="q-big" id="vqText"></div>
+      <div class="row" style="justify-content:space-between">
+        <strong id="vqVoted"></strong>
+        <span class="muted">Spielcode: <b id="vqCode"></b></span>
+      </div>
+      <div class="progress"><div id="vqBar" style="width:0"></div></div>
+      <div class="vote-grid" id="vqOptions"></div>
+      <div class="spacer"></div>
+      <button class="big" id="reveal">Ergebnis zeigen</button>
+    </div>
+
+    <!-- Ergebnis -->
+    <div id="vResults" class="card hidden">
+      <div class="q-head" id="rqHead"></div>
+      <div class="q-big" id="rqText"></div>
+      <div id="rqResults"></div>
+      <div class="spacer"></div>
+      <button class="big" id="next">Nächste Frage ▶</button>
+    </div>
+
+    <!-- Ende -->
+    <div id="vEnd" class="card hidden">
+      <h2>🏁 Alle Ergebnisse</h2>
+      <div id="endSummary"></div>
+    </div>
+
+    <div class="toolbar">
+      <button class="ghost small" id="endGame">Spiel beenden</button>
+      <button class="ghost small" id="newGame">Neues Spiel einrichten</button>
+    </div>
+  </section>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="common.js"></script>
+<script>
+// ---------- Vorgeschlagene Fragen ----------
+const SUGGESTIONS = [
+  'Wer würde am ehesten den Trainer schlagen?',
+  'Wer landet am ehesten im Knast?',
+  'Wer wird als Erster Vater?',
+  'Wer heiratet als Erster?',
+  'Wer wird am ehesten Millionär?',
+  'Wer ist am ehesten pleite, obwohl gerade Monatsanfang ist?',
+  'Wer verschläft am ehesten das Training?',
+  'Wer kassiert am ehesten eine Rote Karte?',
+  'Wer würde am ehesten den Schiri bestechen?',
+  'Wer ist der Faulste im Training?',
+  'Wer wird später am ehesten selbst Trainer?',
+  'Wer hat den schlechtesten Musikgeschmack?',
+  'Wer stirbt in der Zombie-Apokalypse als Erster?',
+  'Wer überlebt am längsten allein auf einer einsamen Insel?',
+  'Wer schreibt um 3 Uhr nachts am ehesten seiner Ex?',
+  'Wer gibt am meisten an?',
+  'Wer hat das größte Ego?',
+  'Wer hat die meisten Matches auf Tinder?',
+  'Wer flirtet am ehesten mit der Kellnerin?',
+  'Wer braucht am längsten im Bad?',
+  'Wer hat die meisten Gym-Selfies auf dem Handy?',
+  'Wer würde für 50 € eine ganze Zitrone essen?',
+  'Wer rennt für eine Wette nackt durchs Dorf?',
+  'Wer wird am ehesten Influencer?',
+  'Wer würde am ehesten bei Love Island mitmachen?',
+  'Wer ist der schlechteste Autofahrer?',
+  'Wer erzählt die besten Geschichten – die zur Hälfte gelogen sind?',
+  'Wer kotzt auf der Party als Erster?',
+  'Wer macht beim Feiern als Erster schlapp?',
+  'Wer verliert beim Feiern am ehesten sein Handy?',
+  'Wer endet nach der Party am ehesten bei einem Döner um 5 Uhr?',
+  'Wer zahlt geliehenes Geld nie zurück?',
+  'Wer ist das größte Muttersöhnchen?',
+  'Wer redet am meisten Müll?',
+  'Wer haut am ehesten bei einer Schlägerei ab?',
+  'Wer würde sich als Erster den Namen seiner Freundin tätowieren lassen?',
+  'Wer schläft auf der Auswärtsfahrt immer als Erster ein?',
+  'Wer würde bei „Wer wird Millionär“ bei der 50-€-Frage rausfliegen?',
+  'Wer geht im Urlaub am ehesten verloren?',
+  'Wer ist heimlich der größte Gamer-Nerd?',
+  'Wer hat die schlimmste Frisur?',
+  'Wer wird am ehesten Bürgermeister?',
+  'Wer würde am ehesten bei einem Überfall mitmachen?',
+  'Wer hat den peinlichsten Insta-Account?',
+  'Wer würde am ehesten seinen besten Kumpel für 1.000 € verraten?',
+  'Wer fällt am ehesten auf einen Fake-Gewinn herein?',
+  'Wer bringt seine Freundin am ehesten mit zur Mannschaftsfahrt?',
+  'Wer hat am ehesten noch Schulden bei der Mannschaftskasse?',
+];
+
+// ---------- Lokaler Speicher ----------
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} },
+};
+let cfg = Object.assign({ title: '', names: [], custom: [], selected: [] }, store.get('umfrage-setup', {}));
+const save = () => store.set('umfrage-setup', cfg);
+
+const $ = (id) => document.getElementById(id);
+
+// ---------- Setup-Ansicht ----------
+function renderNames() {
+  $('chips').innerHTML = cfg.names
+    .map((n, i) => `<span class="chip" style="background:${colorFor(i)}">${esc(n)}<button data-i="${i}" title="Entfernen">✕</button></span>`)
+    .join('');
+  $('nameCount').textContent = cfg.names.length ? `(${cfg.names.length})` : '';
+}
+function addNames(list) {
+  for (const raw of list) {
+    const n = raw.trim().slice(0, 40);
+    if (n && !cfg.names.some((x) => x.toLowerCase() === n.toLowerCase())) cfg.names.push(n);
+  }
+  save(); renderNames();
+}
+$('nameForm').onsubmit = (e) => { e.preventDefault(); addNames([$('nameInput').value]); $('nameInput').value = ''; $('nameInput').focus(); };
+$('chips').onclick = (e) => {
+  const b = e.target.closest('button[data-i]'); if (!b) return;
+  cfg.names.splice(+b.dataset.i, 1); save(); renderNames();
+};
+$('pasteNames').onclick = () => {
+  const t = prompt('Namen eingeben – getrennt durch Komma oder Zeilenumbruch:');
+  if (t) addNames(t.split(/[,\n;]/));
+};
+$('clearNames').onclick = () => { if (cfg.names.length && confirm('Alle Namen löschen?')) { cfg.names = []; save(); renderNames(); } };
+
+const allQuestions = () => [...cfg.custom, ...SUGGESTIONS.filter((s) => !cfg.custom.includes(s))];
+
+function renderQuestions() {
+  cfg.selected = cfg.selected.filter((q) => allQuestions().includes(q));
+  $('selectedList').innerHTML = cfg.selected
+    .map((q, i) => `<li class="q-item on"><span class="q-text">${esc(q)}</span>
+      <button class="ghost small" data-up="${i}" ${i === 0 ? 'disabled' : ''} title="Nach oben">↑</button>
+      <button class="ghost small" data-rm="${i}" title="Abwählen">✕</button></li>`)
+    .join('');
+  $('noSelected').classList.toggle('hidden', cfg.selected.length > 0);
+  $('qCount').textContent = cfg.selected.length ? `(${cfg.selected.length} ausgewählt)` : '';
+  $('suggestList').innerHTML = allQuestions()
+    .map((q) => {
+      const on = cfg.selected.includes(q);
+      const own = cfg.custom.includes(q);
+      return `<li class="q-item${on ? ' on' : ''}" data-q="${esc(q)}">
+        <input type="checkbox" ${on ? 'checked' : ''} tabindex="-1" />
+        <span class="q-text">${esc(q)}</span>
+        ${own ? '<span class="tag">eigene</span><button class="ghost small del" title="Frage löschen">🗑</button>' : ''}
+      </li>`;
+    })
+    .join('');
+}
+$('suggestList').onclick = (e) => {
+  const li = e.target.closest('li[data-q]'); if (!li) return;
+  const q = li.dataset.q;
+  if (e.target.closest('.del')) {
+    cfg.custom = cfg.custom.filter((x) => x !== q);
+  } else if (cfg.selected.includes(q)) {
+    cfg.selected = cfg.selected.filter((x) => x !== q);
+  } else {
+    cfg.selected.push(q);
+  }
+  save(); renderQuestions();
+};
+$('selectedList').onclick = (e) => {
+  const up = e.target.closest('[data-up]'), rm = e.target.closest('[data-rm]');
+  if (up) { const i = +up.dataset.up; [cfg.selected[i - 1], cfg.selected[i]] = [cfg.selected[i], cfg.selected[i - 1]]; }
+  else if (rm) cfg.selected.splice(+rm.dataset.rm, 1);
+  else return;
+  save(); renderQuestions();
+};
+$('qForm').onsubmit = (e) => {
+  e.preventDefault();
+  const q = $('qInput').value.trim().slice(0, 200);
+  if (!q) return;
+  if (!cfg.custom.includes(q) && !SUGGESTIONS.includes(q)) cfg.custom.unshift(q);
+  if (!cfg.selected.includes(q)) cfg.selected.push(q);
+  $('qInput').value = ''; save(); renderQuestions();
+};
+const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+$('random10').onclick = () => { cfg.selected = shuffle(allQuestions().slice()).slice(0, 10); save(); renderQuestions(); };
+$('selectAll').onclick = () => { for (const q of allQuestions()) if (!cfg.selected.includes(q)) cfg.selected.push(q); save(); renderQuestions(); };
+$('shuffleSel').onclick = () => { shuffle(cfg.selected); save(); renderQuestions(); };
+$('clearSel').onclick = () => { cfg.selected = []; save(); renderQuestions(); };
+
+$('title').value = cfg.title;
+$('title').oninput = () => { cfg.title = $('title').value; save(); };
+renderNames(); renderQuestions();
+
+// ---------- Spiel ----------
+const socket = io();
+let session = store.get('umfrage-host', null); // { code, token }
+let state = null;
+
+const joinUrl = (code) => `${location.origin}/play.html?r=${code}`;
+
+$('startLobby').onclick = () => {
+  $('setupErr').textContent = '';
+  if (cfg.names.length < 2) return ($('setupErr').textContent = 'Bitte mindestens 2 Namen eintragen.');
+  if (!cfg.selected.length) return ($('setupErr').textContent = 'Bitte mindestens 1 Frage auswählen.');
+  socket.emit('host:create', { title: cfg.title, options: cfg.names, questions: cfg.selected }, (res) => {
+    if (res.error) return ($('setupErr').textContent = res.error);
+    session = { code: res.code, token: res.token };
+    store.set('umfrage-host', session);
+    showGame(res.state);
+  });
+};
+
+const send = (ev) => session && socket.emit(ev, session);
+$('startGame').onclick = () => send('host:next');
+$('next').onclick = () => send('host:next');
+$('reveal').onclick = () => send('host:reveal');
+$('endGame').onclick = () => { if (confirm('Spiel jetzt beenden und Gesamtergebnis zeigen?')) send('host:end'); };
+$('newGame').onclick = () => {
+  if (state && state.phase !== 'end' && !confirm('Laufendes Spiel verlassen?')) return;
+  store.del('umfrage-host'); session = null; state = null;
+  $('game').classList.add('hidden'); $('setup').classList.remove('hidden');
+  window.scrollTo(0, 0);
+};
+
+socket.on('connect', () => {
+  if (session) socket.emit('host:resume', session, (res) => {
+    if (res.error) { store.del('umfrage-host'); session = null; return; }
+    showGame(res.state);
+  });
+});
+socket.on('state', (s) => { if (session && s.code === session.code) showGame(s); });
+
+function showGame(s) {
+  const prev = state;
+  state = s;
+  $('setup').classList.add('hidden');
+  $('game').classList.remove('hidden');
+  $('gTitle').textContent = s.title;
+  $('gSub').textContent = s.phase === 'lobby' ? `${s.totalQuestions} Fragen · ${s.options.length} Antwortmöglichkeiten` : '';
+  for (const v of ['vLobby', 'vVoting', 'vResults', 'vEnd']) $(v).classList.add('hidden');
+  const head = `Frage ${s.index + 1} von ${s.totalQuestions}`;
+  const isLast = s.index + 1 >= s.totalQuestions;
+
+  if (s.phase === 'lobby') {
+    $('vLobby').classList.remove('hidden');
+    const url = joinUrl(s.code);
+    if (!prev || prev.code !== s.code) $('qrImg').src = `/qr.svg?u=${encodeURIComponent(url)}`;
+    $('lobbyCode').textContent = s.code;
+    $('lobbyLink').textContent = url;
+    $('lobbyPlayers').textContent = s.players;
+  } else if (s.phase === 'voting') {
+    $('vVoting').classList.remove('hidden');
+    $('vqHead').textContent = head;
+    $('vqText').textContent = s.question;
+    $('vqCode').textContent = s.code;
+    $('vqVoted').textContent = `${s.voted} von ${s.players} haben abgestimmt`;
+    $('vqBar').style.width = s.players ? `${Math.min(100, (s.voted / s.players) * 100)}%` : '0';
+    $('vqOptions').innerHTML = s.options.map((o, i) => `<div class="vote-btn center" style="background:${colorFor(i)};display:flex;align-items:center;justify-content:center">${esc(o)}</div>`).join('');
+    // Automatisch aufdecken, sobald alle abgestimmt haben
+    if (s.players > 0 && s.voted >= s.players) setTimeout(() => state === s && send('host:reveal'), 900);
+  } else if (s.phase === 'results') {
+    $('vResults').classList.remove('hidden');
+    $('rqHead').textContent = head;
+    $('rqText').textContent = s.question;
+    $('rqResults').innerHTML = resultsHTML(s.options, s.counts);
+    $('next').textContent = isLast ? 'Gesamtergebnis 🏁' : 'Nächste Frage ▶';
+  } else if (s.phase === 'end') {
+    $('vEnd').classList.remove('hidden');
+    $('endGame').classList.add('hidden');
+    $('endSummary').innerHTML = s.summary
+      .map((x, i) => `<div class="summary-item"><h3>${i + 1}. ${esc(x.question)}</h3>${resultsHTML(s.options, x.counts)}</div>`)
+      .join('');
+  }
+  if (s.phase !== 'end') $('endGame').classList.remove('hidden');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Mitspielen – Anonyme Abstimmung</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="wrap narrow">
+
+  <!-- Code eingeben (falls ohne QR-Code geöffnet) -->
+  <section id="vJoin" class="hidden">
+    <h1>Mitspielen 🗳️</h1>
+    <p class="sub">Gib den Spielcode ein, der beim Host angezeigt wird.</p>
+    <form id="joinForm" class="card">
+      <input type="text" id="codeInput" maxlength="4" placeholder="CODE" autocomplete="off"
+             style="text-transform:uppercase;font-size:28px;text-align:center;letter-spacing:.2em" />
+      <div class="spacer"></div>
+      <button class="big" type="submit">Beitreten</button>
+      <p class="err" id="joinErr"></p>
+    </form>
+  </section>
+
+  <section id="vGame" class="hidden">
+    <h1 id="gTitle" style="font-size:24px"></h1>
+    <p class="sub" id="gSub"></p>
+
+    <div id="vLobby" class="card center hidden">
+      <div style="font-size:48px">✅</div>
+      <h2>Du bist drin!</h2>
+      <p class="muted">Warte, bis der Host das Spiel startet. Deine Stimmen sind komplett anonym.</p>
+      <p><b id="lobbyPlayers"></b></p>
+    </div>
+
+    <div id="vVoting" class="hidden">
+      <div class="q-head" id="vqHead"></div>
+      <div class="q-big" id="vqText"></div>
+      <div class="vote-grid" id="vqOptions"></div>
+      <p class="center muted" id="vqStatus" style="margin-top:16px"></p>
+    </div>
+
+    <div id="vResults" class="hidden">
+      <div class="q-head" id="rqHead"></div>
+      <div class="q-big" id="rqText"></div>
+      <div id="rqResults"></div>
+      <p class="center muted" style="margin-top:16px">Warte auf die nächste Frage …</p>
+    </div>
+
+    <div id="vEnd" class="hidden">
+      <h2>🏁 Spiel vorbei – alle Ergebnisse</h2>
+      <div id="endSummary"></div>
+    </div>
+  </section>
+
+  <p class="err center" id="connErr"></p>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="common.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+
+// Anonyme Geräte-ID: nur damit jeder einmal pro Frage abstimmt
+function deviceId() {
+  try {
+    let id = localStorage.getItem('umfrage-pid');
+    if (!id) { id = crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now(); localStorage.setItem('umfrage-pid', id); }
+    return id;
+  } catch { return (window.__pid ||= String(Math.random()).slice(2) + Date.now()); }
+}
+const pid = deviceId();
+
+const socket = io();
+let code = (new URLSearchParams(location.search).get('r') || '').toUpperCase();
+let state = null;
+let myVote = null; // { index, option }
+
+function join() {
+  socket.emit('player:join', { code, pid }, (res) => {
+    if (res.error) {
+      $('vGame').classList.add('hidden');
+      $('vJoin').classList.remove('hidden');
+      $('joinErr').textContent = res.error;
+      return;
+    }
+    history.replaceState(null, '', `?r=${code}`);
+    myVote = res.myVote != null ? { index: res.state.index, option: res.myVote } : null;
+    render(res.state);
+  });
+}
+
+$('joinForm').onsubmit = (e) => {
+  e.preventDefault();
+  code = $('codeInput').value.trim().toUpperCase();
+  if (code) join();
+};
+
+socket.on('connect', () => { $('connErr').textContent = ''; if (code) join(); else $('vJoin').classList.remove('hidden'); });
+socket.on('disconnect', () => { $('connErr').textContent = 'Verbindung verloren – verbinde neu …'; });
+socket.on('state', (s) => { if (s.code === code) render(s); });
+
+function vote(option) {
+  if (!state || state.phase !== 'voting') return;
+  const index = state.index;
+  socket.emit('player:vote', { index, option }, (res) => {
+    if (res.error) return ($('vqStatus').textContent = res.error);
+    myVote = { index, option };
+    render(state);
+  });
+}
+
+function render(s) {
+  state = s;
+  $('vJoin').classList.add('hidden');
+  $('vGame').classList.remove('hidden');
+  $('gTitle').textContent = s.title;
+  $('gSub').textContent = `Spielcode ${s.code}`;
+  for (const v of ['vLobby', 'vVoting', 'vResults', 'vEnd']) $(v).classList.add('hidden');
+  const head = `Frage ${s.index + 1} von ${s.totalQuestions}`;
+
+  if (s.phase === 'lobby') {
+    $('vLobby').classList.remove('hidden');
+    $('lobbyPlayers').textContent = `${s.players} ${s.players === 1 ? 'Spieler' : 'Spieler'} in der Lobby`;
+  } else if (s.phase === 'voting') {
+    $('vVoting').classList.remove('hidden');
+    $('vqHead').textContent = head;
+    $('vqText').textContent = s.question;
+    const chosen = myVote && myVote.index === s.index ? myVote.option : null;
+    const grid = $('vqOptions');
+    grid.classList.toggle('has-choice', chosen !== null);
+    grid.innerHTML = s.options
+      .map((o, i) => `<button class="vote-btn${chosen === i ? ' chosen' : ''}" data-i="${i}" style="background:${colorFor(i)}">${esc(o)}</button>`)
+      .join('');
+    $('vqStatus').textContent = chosen !== null
+      ? `✅ Abgestimmt (anonym) · ${s.voted} von ${s.players} fertig – du kannst noch umentscheiden`
+      : `${s.voted} von ${s.players} haben abgestimmt`;
+  } else if (s.phase === 'results') {
+    $('vResults').classList.remove('hidden');
+    $('rqHead').textContent = head;
+    $('rqText').textContent = s.question;
+    $('rqResults').innerHTML = resultsHTML(s.options, s.counts);
+  } else if (s.phase === 'end') {
+    $('vEnd').classList.remove('hidden');
+    $('endSummary').innerHTML = s.summary
+      .map((x, i) => `<div class="summary-item"><h3>${i + 1}. ${esc(x.question)}</h3>${resultsHTML(s.options, x.counts)}</div>`)
+      .join('');
+  }
+}
+
+$('vqOptions').onclick = (e) => {
+  const b = e.target.closest('button[data-i]');
+  if (b) vote(+b.dataset.i);
+};
+</script>
+</body>
+</html>
