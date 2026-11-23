@@ -168,7 +168,7 @@ function scoreboardHTML(options, scores) {
   if (!scores || !scores.length) return '';
   return `<div class="scoreboard"><div class="sec-label">Punktestand</div>${scores
     .map((x, n) => `<div class="score-row"><span class="rank">${n + 1}</span><span class="dot" style="background:${colorFor(x.name)}"></span><b>${esc(options[x.name])}</b><span class="pts">${x.pts}</span></div>`)
-    .join('')}<div class="muted" style="font-size:13px;margin-top:6px">Crew-Sieg +1 · Impostor-Sieg +2</div></div>`;
+    .join('')}</div>`;
 }
 
 // Zusammenfassung am Spielende

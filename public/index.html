@@ -174,7 +174,7 @@
     <!-- Fragen (Klassisch, Fragen-Mix, Wer hat's gesagt?) -->
     <div class="panel" id="qSummary">
       <div class="sec-row"><div class="sec-label" id="qSumLabel">Fragen</div><span class="count-pill" id="qSumCount"></span></div>
-      <p class="hint" id="qSumHint" style="margin:6px 0 10px"></p>
+      
       <ul class="preview" id="qPreview"></ul>
       <div class="toolbar">
         <button class="small" id="openPicker">Fragen auswählen</button>
@@ -192,18 +192,18 @@
     <div class="panel">
       <div class="sec-label">Optionen</div>
       <div id="optSaid" class="hidden">
-        <div class="setting"><span class="txt"><b>Aussagen pro Runde</b><span>Werden nach dem Schreiben zufällig gezogen.</span></span>
+        <div class="setting"><span class="txt"><b>Aussagen pro Runde</b></span>
           <div class="segmented" id="perRound"><button type="button" data-n="1">1</button><button type="button" data-n="2">2</button><button type="button" data-n="3">3</button><button type="button" data-n="4">4</button></div></div>
-        <label class="setting"><span class="txt"><b>Spieler dürfen Fragen einreichen</b><span>Du wählst in der Lobby aus.</span></span>
+        <label class="setting"><span class="txt"><b>Spieler reichen Fragen ein</b></span>
           <span class="switch"><input type="checkbox" id="setupAllowSubmit" /><span></span></span></label>
       </div>
       <div id="optImp" class="hidden">
-        <div class="setting"><span class="txt"><b>Anzahl Impostor</b><span>Wird bei wenigen Spielern automatisch begrenzt.</span></span>
+        <div class="setting"><span class="txt"><b>Impostor</b></span>
           <div class="segmented" id="impCount"><button type="button" data-n="1">1</button><button type="button" data-n="2">2</button><button type="button" data-n="3">3</button></div></div>
-        <label class="setting"><span class="txt"><b>Tipp für Impostor</b><span>Impostor sehen Kategorie und Untergruppe, z. B. „Länder · Asien“.</span></span>
+        <label class="setting"><span class="txt"><b>Tipp für Impostor</b></span>
           <span class="switch"><input type="checkbox" id="setupHints" /><span></span></span></label>
       </div>
-      <label class="setting"><span class="txt"><b>Dieses Gerät spielt mit</b><span>Für dich als Host – wenn du kein zweites Gerät dabei hast.</span></span>
+      <label class="setting"><span class="txt"><b>Ich spiele auf diesem Gerät mit</b></span>
         <span class="switch"><input type="checkbox" id="setupHostPlays" /><span></span></span></label>
     </div>
 
@@ -229,8 +229,8 @@
             <div class="lobby">
               <div class="qr" id="qrBox" title="Groß anzeigen"><img id="qrImg" alt="QR-Code zum Beitreten" /></div>
               <div>
-                <div class="eyebrow">QR-Code scannen zum Mitmachen</div>
-                <div class="muted" style="margin-top:10px">oder auf <b id="lobbyHost"></b> den Code eingeben:</div>
+                <div class="eyebrow">Scannen oder Code eingeben</div>
+                <div class="muted hidden" id="lobbyHost"></div>
                 <div class="code" id="lobbyCode"></div>
                 <div class="stats">
                   <div><div class="big-num" id="lobbyPlayers">0</div><div class="muted">Spieler</div></div>
@@ -244,15 +244,14 @@
           </div>
 
           <div class="card hidden" id="claimCard">
-            <h2>Wer ist schon dabei?</h2>
-            <p class="hint">Jeder tippt auf dem Handy auf seinen Namen.</p>
+            <h2>Dabei</h2>
             <div class="players-row" id="claimRow"></div>
           </div>
 
           <div class="card hidden" id="subCard">
             <div class="card-head"><h2><span id="subTitle">Eingereichte Fragen</span> <small id="subCount"></small></h2>
               <button class="ghost small hidden" id="takeAllSubs">Alle übernehmen</button></div>
-            <div class="empty" id="noSubs">Noch nichts eingereicht – die Spieler tippen ihre Fragen auf dem Handy ein.</div>
+            <div class="empty" id="noSubs">Noch nichts eingereicht.</div>
             <ul class="q-list" id="subList"></ul>
           </div>
         </div>
@@ -261,7 +260,7 @@
         <div id="vVoting" class="card stage hidden">
           <div class="q-head" id="vqHead"></div>
           <div class="q-big" id="vqText"></div>
-          <div class="row" style="justify-content:space-between"><strong id="vqVoted"></strong><span class="muted">Code <b id="vqCode"></b></span></div>
+          <div class="count-line"><strong id="vqVoted"></strong><span id="vqCode" class="hidden"></span></div>
           <div class="progress"><div id="vqBar" style="width:0"></div></div>
           <div class="vote-grid" id="vqOptions"></div>
           <div class="spacer"></div>
@@ -278,9 +277,9 @@
         <!-- Wer hat's gesagt? -->
         <div id="vWriting" class="card stage hidden">
           <div class="q-head" id="wHead"></div>
-          <div class="q-big">Alle schreiben jetzt ihre Meinung</div>
-          <p class="muted" style="margin-top:-8px">Danach werden <b id="wPer"></b> zufällig gezogen.</p>
-          <div class="row" style="justify-content:space-between"><strong id="wCount"></strong><span class="muted">Code <b id="wCode"></b></span></div>
+          <div class="q-big">Alle schreiben</div>
+          <span id="wPer" class="hidden"></span><span id="wCode" class="hidden"></span>
+          <div class="count-line"><strong id="wCount"></strong></div>
           <div class="progress"><div id="wBar" style="width:0"></div></div>
           <ul class="assign" id="wAssign"></ul>
           <div class="spacer"></div>
@@ -290,7 +289,7 @@
         <div id="vGuess" class="card stage hidden">
           <div class="q-head" id="gHead"></div>
           <div id="gQuote" style="margin-top:8px"></div>
-          <div class="row" style="justify-content:space-between"><strong id="gVoted"></strong><span class="muted">Diskutiert – wer war’s?</span></div>
+          <div class="count-line"><strong id="gVoted"></strong></div>
           <div class="progress"><div id="gBar" style="width:0"></div></div>
           <div class="vote-grid" id="gOptions"></div>
           <div class="spacer"></div>
@@ -316,28 +315,27 @@
         <!-- Impostor -->
         <div id="vRoles" class="card stage hidden">
           <div class="q-head" id="iHead"></div>
-          <div class="q-big">Schaut euer Wort an – dann verdecken</div>
-          <p class="muted" style="margin-top:-8px">Reihum sagt jeder einen Begriff, der zum Wort passt, ohne es zu verraten. Kennt ein Impostor das Wort, ruft er es rein.</p>
-          <div class="row" style="justify-content:space-between"><strong id="iCovered"></strong><span class="muted">Code <b id="iCode"></b></span></div>
+          <div class="q-big">Wort ansehen &amp; verdecken</div>
+          <div class="count-line"><strong id="iCovered"></strong><span id="iCode" class="hidden"></span></div>
           <div class="progress"><div id="iBar" style="width:0"></div></div>
           <div class="players-row" id="iRow"></div>
           <div class="spacer"></div>
           <button class="big" id="toVote">Zur Abstimmung</button>
           <div class="toolbar">
-            <button class="ghost small" id="guessBtn">Jemand hat ein Wort reingerufen</button>
-            <button class="ghost small" id="endRoundBtn">Runde beenden &amp; auflösen</button>
+            <button class="ghost small" id="guessBtn">Wort reingerufen</button>
+            <button class="ghost small" id="endRoundBtn">Runde beenden</button>
           </div>
           <p class="err" id="iErr"></p>
         </div>
         <div id="vImpVote" class="card stage hidden">
           <div class="q-head" id="ivHead"></div>
           <div class="q-big">Wer ist der Impostor?</div>
-          <div class="row" style="justify-content:space-between"><strong id="ivVoted"></strong><span class="muted">Jeder wirft einen raus</span></div>
+          <div class="count-line"><strong id="ivVoted"></strong></div>
           <div class="progress"><div id="ivBar" style="width:0"></div></div>
           <div class="vote-grid" id="ivOptions"></div>
           <div class="spacer"></div>
           <button class="big" id="ivSolve">Auflösen</button>
-          <div class="toolbar"><button class="ghost small" id="guessBtn2">Jemand hat ein Wort reingerufen</button></div>
+          <div class="toolbar"><button class="ghost small" id="guessBtn2">Wort reingerufen</button></div>
         </div>
         <div id="vKicked" class="card stage hidden">
           <div class="q-head" id="kHead"></div>
@@ -370,14 +368,14 @@
           <div id="endSummary"></div>
         </div>
 
-        <div class="toolbar">
-          <button class="ghost small" id="endGame">Spiel beenden</button>
-          <button class="ghost small" id="newGame">Neues Spiel einrichten</button>
+        <div class="toolbar game-foot">
+          <button class="ghost small" id="endGame">Beenden</button>
+          <button class="ghost small hidden" id="newGame">Neues Spiel</button>
         </div>
       </div>
 
       <aside id="playerPane" class="hidden">
-        <div class="pane-label">Dein Bildschirm als Spieler</div>
+        
         <iframe id="playerFrame" title="Spieler-Ansicht"></iframe>
       </aside>
     </div>
@@ -441,13 +439,12 @@
 <!-- ============ WORT REINGERUFEN ============ -->
 <div class="overlay hidden" id="guessSheet">
   <div class="sheet">
-    <div class="sheet-head"><h2 style="margin:0;flex:1">Wer hat ein Wort reingerufen?</h2><button class="ghost small icon-btn" id="gsClose">✕</button></div>
-    <p class="hint">Wähle den Spieler – dann, ob das Wort richtig war. Richtig = Impostor gewinnen. Falsch = der Spieler fliegt raus.</p>
+    <div class="sheet-head"><h2 style="margin:0;flex:1">Wer hat’s reingerufen?</h2><button class="ghost small icon-btn" id="gsClose">✕</button></div>
     <div class="vote-grid" id="gsGrid"></div>
     <div class="spacer"></div>
     <div class="row">
-      <button class="big" id="gsRight" style="flex:1" disabled>Richtig geraten</button>
-      <button class="big ghost" id="gsWrong" style="flex:1" disabled>Falsch geraten</button>
+      <button class="big" id="gsRight" style="flex:1" disabled>Richtig</button>
+      <button class="big ghost" id="gsWrong" style="flex:1" disabled>Falsch</button>
     </div>
     <p class="err" id="gsErr"></p>
   </div>
@@ -605,9 +602,6 @@ function renderQSummary() {
   const list = cfg[P.sel];
   $('qSumLabel').textContent = P.said ? 'Meinungsfragen' : 'Fragen';
   $('qSumCount').textContent = `${list.length} ausgewählt`;
-  $('qSumHint').textContent = P.said ? 'Jeder bekommt pro Runde zufällig eine davon.'
-    : cfg.mode === 'open' ? 'Optional – in der Lobby kommen die Fragen der Spieler dazu.'
-    : 'Kommen in dieser Reihenfolge dran.';
   $('qPreview').innerHTML = list.slice(0, 4).map((q) => `<li>${esc(q)}</li>`).join('') + (list.length > 4 ? `<li class="muted">+ ${list.length - 4} weitere</li>` : '');
   $('openPicker').textContent = list.length ? 'Auswahl bearbeiten' : 'Fragen auswählen';
 }
@@ -1005,7 +999,7 @@ $('xNext').onclick = () => next();
 $('nextRound').onclick = () => { $('reErr').textContent = ''; next('reErr'); };
 $('finishBtn').onclick = () => send('host:end');
 $('toVote').onclick = () => {
-  if (state.covered.length < state.alive.length && !confirm('Noch nicht alle haben ihr Wort verdeckt. Trotzdem zur Abstimmung?')) return;
+  if (state.covered.length < state.alive.length && !confirm('Noch nicht alle haben verdeckt. Trotzdem abstimmen?')) return;
   next('iErr');
 };
 $('ivSolve').onclick = () => send('host:reveal');
@@ -1164,6 +1158,11 @@ function showGame(s) {
   state = s;
   $('gTitle').textContent = s.title;
   $('gEyebrow').textContent = `${MODES[s.mode].name} · Code ${s.code}`;
+  // Während des Spiels: Kopfbereich ausblenden – nur in Lobby und am Ende sichtbar
+  const showHead = s.phase === 'lobby' || s.phase === 'end';
+  $('gTitle').classList.toggle('hidden', !showHead);
+  $('gEyebrow').classList.toggle('hidden', !showHead);
+  $('newGame').classList.toggle('hidden', s.phase !== 'end');
   const views = ['vLobby', 'vVoting', 'vResults', 'vWriting', 'vGuess', 'vReveal', 'vRoundEnd', 'vRoles', 'vImpVote', 'vKicked', 'vRoundOver', 'vEnd'];
   const imp = s.mode === 'impostor';
   const phaseView = {
@@ -1201,23 +1200,23 @@ function showGame(s) {
     }
     case 'voting':
       if (imp) {
-        $('ivHead').textContent = `Runde ${s.round} · Abstimmung`;
-        $('ivVoted').textContent = `${s.voted} von ${s.voters} haben abgestimmt`;
+        $('ivHead').textContent = `Runde ${s.round}`;
+        $('ivVoted').textContent = `${s.voted}/${s.voters}`;
         $('ivBar').style.width = pct(s.voted, s.voters);
         $('ivOptions').innerHTML = staticOptions(s, s.alive);
         if (s.voters > 0 && s.voted >= s.voters && cfg.settings.autoReveal) setTimeout(() => state === s && send('host:reveal'), 1200);
         break;
       }
-      $('vqHead').textContent = `Frage ${s.index + 1} von ${s.totalQuestions}`;
+      $('vqHead').textContent = `${s.index + 1}/${s.totalQuestions}`;
       $('vqText').textContent = s.question;
       $('vqCode').textContent = s.code;
-      $('vqVoted').textContent = `${s.voted} von ${s.players} haben abgestimmt`;
+      $('vqVoted').textContent = `${s.voted}/${s.players}`;
       $('vqBar').style.width = pct(s.voted, s.players);
       $('vqOptions').innerHTML = staticOptions(s);
       if (allVoted && cfg.settings.autoReveal) setTimeout(() => state === s && send('host:reveal'), 1200);
       break;
     case 'results':
-      $('rqHead').textContent = `Frage ${s.index + 1} von ${s.totalQuestions}`;
+      $('rqHead').textContent = `${s.index + 1}/${s.totalQuestions}`;
       $('rqText').textContent = s.question;
       if (changed) $('rqResults').innerHTML = resultsHTML(s.options, s.counts);
       $('next').textContent = s.index + 1 >= s.totalQuestions ? 'Gesamtergebnis' : 'Nächste Frage';
@@ -1226,21 +1225,21 @@ function showGame(s) {
       $('wHead').textContent = `Runde ${s.round}`;
       $('wPer').textContent = s.perRound === 1 ? '1 Aussage' : `${s.perRound} Aussagen`;
       $('wCode').textContent = s.code;
-      $('wCount').textContent = `${s.written} von ${s.writers} haben geschrieben`;
+      $('wCount').textContent = `${s.written}/${s.writers}`;
       $('wBar').style.width = pct(s.written, s.writers);
       renderAssign();
       $('drawBtn').disabled = !s.written;
       if (s.writers > 0 && s.written >= s.writers && cfg.settings.autoDraw) setTimeout(() => state === s && send('host:next', { from: 'writing' }), 1500);
       break;
     case 'guess':
-      $('gHead').textContent = `Runde ${s.round} · Aussage ${s.pickIndex + 1} von ${s.picksTotal}`;
+      $('gHead').textContent = `${s.pickIndex + 1}/${s.picksTotal}`;
       $('gQuote').innerHTML = quoteHTML(s.prompt, s.quote);
-      $('gVoted').textContent = `${s.voted} von ${s.players} haben getippt`;
+      $('gVoted').textContent = `${s.voted}/${s.players}`;
       $('gBar').style.width = pct(s.voted, s.players);
       $('gOptions').innerHTML = staticOptions(s);
       break;
     case 'reveal':
-      $('xHead').textContent = `Runde ${s.round} · Aussage ${s.pickIndex + 1} von ${s.picksTotal}`;
+      $('xHead').textContent = `${s.pickIndex + 1}/${s.picksTotal}`;
       if (changed) {
         $('xQuote').innerHTML = quoteHTML(s.prompt, s.quote);
         $('xReveal').innerHTML = revealHTML(s.options, s.author, s.counts);
@@ -1255,19 +1254,19 @@ function showGame(s) {
         .join('');
       break;
     case 'roles':
-      $('iHead').textContent = `Runde ${s.round} · ${s.impostorCount} Impostor · ${s.hints ? 'mit Tipp' : 'ohne Tipp'}`;
+      $('iHead').textContent = `Runde ${s.round}`;
       $('iCode').textContent = s.code;
-      $('iCovered').textContent = `${s.covered.length} von ${s.alive.length} haben ihr Wort verdeckt`;
+      $('iCovered').textContent = `${s.covered.length}/${s.alive.length} verdeckt`;
       $('iBar').style.width = pct(s.covered.length, s.alive.length);
       $('iRow').innerHTML = playerChips(s, s.covered, s.alive);
-      $('toVote').textContent = s.covered.length >= s.alive.length ? 'Zur Abstimmung' : 'Zur Abstimmung (noch nicht alle verdeckt)';
+      $('toVote').textContent = 'Abstimmen';
       break;
     case 'kicked':
       $('kHead').textContent = `Runde ${s.round}`;
       if (changed) {
         $('kBanner').innerHTML = kickedHTML(s.options, s.kicked);
         $('kResult').innerHTML = s.result ? impResultHTML(s.options, s.result) + scoreboardHTML(s.options, s.scores) : '';
-        $('kChart').innerHTML = s.counts ? `<h3 class="mini">Abstimmung</h3>${resultsHTML(s.options, s.counts)}` : '';
+        $('kChart').innerHTML = s.counts ? resultsHTML(s.options, s.counts) : '';
       }
       $('kNext').textContent = s.result ? 'Neue Runde' : 'Weiterspielen';
       $('kEnd').textContent = s.result ? 'Spiel beenden' : 'Runde beenden';

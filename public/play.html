@@ -66,7 +66,7 @@
       <div class="card waiting">
         <div class="emoji">✅</div>
         <h2 style="margin-top:8px" id="lobbyHello">Du bist drin!</h2>
-        <p class="muted">Warte, bis der Host das Spiel startet<span class="dots"></span></p>
+        <p class="muted">Gleich geht’s los<span class="dots"></span></p>
         <p><b id="lobbyPlayers"></b></p>
         <button class="ghost small hidden" id="changeName">Namen ändern</button>
       </div>
@@ -95,42 +95,38 @@
       <div class="q-head" id="rqHead"></div>
       <div class="q-big" id="rqText"></div>
       <div id="rqResults"></div>
-      <p class="center muted" style="margin-top:18px">Warte auf die nächste Frage<span class="dots"></span></p>
+
     </div>
 
     <!-- Schreiben ("Wer hat's gesagt?") -->
     <div id="vDisclaimer" class="hidden">
       <div class="q-head" id="dHead"></div>
       <div class="disclaimer">
-        <h3>Kurz bevor du schreibst</h3>
-        <ul>
-          <li><b>Sei ehrlich.</b> Das Spiel lebt davon, dass ihr wirklich sagt, was ihr denkt.</li>
-          <li><b>Werd konkret.</b> Namen, Zahlen, Details – je spezifischer, desto besser die Diskussion.</li>
-          <li><b>Übertreiben ist erlaubt.</b> Ein bisschen zuspitzen macht’s lustiger – solange der Kern stimmt.</li>
-          <li><b>Bleibt fair.</b> Nichts, was jemanden aus der Runde wirklich verletzt oder bloßstellt.</li>
+        <ul class="rules-short">
+          <li>Sei ehrlich</li>
+          <li>Werd konkret</li>
+          <li>Übertreiben erlaubt</li>
+          <li>Bleibt fair</li>
         </ul>
-        <p class="muted" style="font-size:14px;margin:0 0 16px">Nur gezogene Aussagen werden gezeigt und aufgelöst. Alle anderen bleiben für immer geheim – auch vor dem Host.</p>
-        <button class="big" type="button" id="dOk">Verstanden – los geht’s</button>
+        <button class="big" type="button" id="dOk">Los geht’s</button>
       </div>
     </div>
 
     <form id="vWriting" class="hidden">
       <div class="q-head" id="wHead"></div>
       <div class="q-big" id="wPrompt"></div>
-      <div class="note">💬 Ehrlich, konkret, ruhig etwas übertrieben. Wird deine Aussage gezogen, muss die Gruppe erraten, dass sie von dir ist.</div>
       <textarea id="wInput" maxlength="300" placeholder="Deine Meinung …"></textarea>
       <div class="row" style="justify-content:space-between;margin:6px 0 14px"><span class="muted" id="wLen">0 / 300</span><span class="muted" id="wProgress"></span></div>
       <button class="big accent" type="submit" id="wBtn">Abschicken</button>
       <p class="err" id="wErr"></p>
-      <p class="center muted hidden" id="wSent" style="margin-top:14px">✅ Abgeschickt! Du kannst sie bis zur Auswahl noch ändern.</p>
+      <p class="center muted hidden" id="wSent" style="margin-top:14px">✓ Abgeschickt</p>
     </form>
 
     <!-- Raten ("Wer hat's gesagt?") -->
     <div id="vGuess" class="hidden">
       <div class="q-head" id="gHead"></div>
-      <div class="secret hidden" id="gSecret">🤫 Das ist deine Aussage – Pokerface!</div>
+      <div class="secret hidden" id="gSecret">🤫 Deine Aussage</div>
       <div id="gQuote" style="margin-top:8px"></div>
-      <p class="muted" style="margin-top:-6px">Diskutiert – wer hat das gesagt? Dann tippen:</p>
       <div class="vote-grid" id="gOptions"></div>
       <p class="center muted" id="gStatus" style="margin-top:16px"></p>
     </div>
@@ -147,25 +143,24 @@
     <div id="vRoundEnd" class="card waiting hidden">
       <div class="emoji">🎉</div>
       <h2 style="margin-top:8px">Runde geschafft</h2>
-      <p class="muted">Gleich geht’s weiter<span class="dots"></span></p>
     </div>
 
     <!-- Ende -->
     <!-- ===== Impostor ===== -->
     <div id="vRole" class="hidden">
       <div class="q-head" id="roleHead"></div>
-      <div class="secret hidden" id="outBanner">Du bist raus – schau zu, wie es weitergeht.</div>
+      <div class="secret hidden" id="outBanner">Du bist raus</div>
       <div class="role-card covered" id="roleCard"></div>
       <div class="spacer"></div>
       <button class="big" id="coverBtn">Verdecken</button>
-      <div class="rule hidden" id="impRule">Hör gut zu und versuch, das Wort zu erraten. <b>Kennst du es? Ruf es laut rein!</b> Richtig → die Impostor gewinnen. Falsch → du fliegst raus.</div>
+      <div class="rule hidden" id="impRule">Wort erkannt? <b>Reinrufen!</b> Falsch = raus.</div>
       <p class="center muted" id="roleStatus" style="margin-top:14px"></p>
     </div>
 
     <div id="vImpVote" class="hidden">
       <div class="q-head" id="ivHead"></div>
       <div class="q-big">Wer ist der Impostor?</div>
-      <div class="secret hidden" id="ivOut">Du bist raus und kannst nicht mehr abstimmen.</div>
+      <div class="secret hidden" id="ivOut">Du bist raus</div>
       <div class="vote-grid" id="ivOptions"></div>
       <p class="center muted" id="ivStatus" style="margin-top:16px"></p>
     </div>
@@ -175,18 +170,18 @@
       <div id="kBanner"></div>
       <div id="kResult"></div>
       <div id="kChart"></div>
-      <p class="center muted" id="kWait" style="margin-top:14px">Der Host entscheidet, wie es weitergeht<span class="dots"></span></p>
+
     </div>
 
     <div id="vImpOver" class="hidden">
       <div class="q-head" id="ioHead"></div>
       <div id="ioResult"></div>
-      <p class="center muted" style="margin-top:14px">Warte auf die nächste Runde<span class="dots"></span></p>
+
     </div>
 
     <div id="vEnd" class="hidden">
       <div class="eyebrow">Spiel vorbei</div>
-      <h2 style="font-size:26px">Alle Ergebnisse</h2>
+      <h2 style="font-size:26px">Ergebnisse</h2>
       <div id="endSummary"></div>
     </div>
   </section>
@@ -327,13 +322,13 @@ $('ivOptions').onclick = (e) => { const b = e.target.closest('button[data-i]'); 
 
 function roleCardHTML() {
   if (!peek) {
-    return `${ICONS.eye}<div class="rc-small">${me.covered ? 'Verdeckt ✓' : 'Deine Karte'}</div><div class="rc-word" style="font-size:24px">Tippen zum ${me.covered ? 'Ansehen' : 'Aufdecken'}</div><div class="rc-sub">Halt das Handy so, dass niemand mitliest.</div>`;
+    return `${ICONS.eye}<div class="rc-word" style="font-size:24px;margin-top:12px">${me.covered ? 'Verdeckt ✓' : 'Tippen'}</div>`;
   }
   if (me.role === 'impostor') {
-    const tip = me.hint ? `<div class="rc-tip">Tipp: ${esc(me.deck || '')}${me.deck ? ' · ' : ''}${esc(me.hint)}</div>` : '<div class="rc-tip">Ohne Tipp – viel Glück!</div>';
-    return `${ICONS.impostor}<div class="rc-small">Deine Rolle</div><div class="rc-word">Impostor</div><div class="rc-sub">Du kennst das Wort nicht.</div>${tip}`;
+    const tip = me.hint ? `<div class="rc-tip">${esc(me.deck || '')}${me.deck ? ' · ' : ''}${esc(me.hint)}</div>` : '';
+    return `${ICONS.impostor}<div class="rc-word">Impostor</div>${tip}`;
   }
-  return `<div class="rc-small">Dein Wort</div><div class="rc-word">${esc(me.word || '')}</div><div class="rc-sub">${esc(me.deck || '')}</div>`;
+  return `<div class="rc-word">${esc(me.word || '')}</div><div class="rc-sub">${esc(me.deck || '')}</div>`;
 }
 
 // ---------- Darstellung ----------
@@ -354,6 +349,9 @@ function render(s) {
   $('vGame').classList.remove('hidden');
   $('gTitle').textContent = s.title;
   $('gEyebrow').textContent = MODES[s.mode].name;
+  const showHead = s.phase === 'lobby' || s.phase === 'end';
+  $('gEyebrow').classList.toggle('hidden', !showHead);
+  $('gTitle').classList.toggle('hidden', !showHead);
   $('codePill').textContent = `Code ${s.code}`;
   $('codePill').classList.remove('hidden');
 
@@ -362,7 +360,7 @@ function render(s) {
   if (imp && peekRound !== s.round) { peekRound = s.round; peek = false; }
   const needName = (said && (me.myName == null || wantRename) && ['lobby', 'writing', 'roundEnd'].includes(s.phase))
     || (imp && s.phase !== 'end' && (me.myName == null || (wantRename && ['lobby', 'roundOver'].includes(s.phase))));
-  const needAck = said && s.phase === 'writing' && !needName && ackRound !== s.round && !me.myAnswer;
+  const needAck = said && s.phase === 'writing' && !needName && ackRound === null && !me.myAnswer;
   const view = needName ? 'vClaim' : needAck ? 'vDisclaimer' : imp ? {
     lobby: 'vLobby', roles: me.role ? 'vRole' : 'vImpOver', voting: 'vImpVote', kicked: 'vKicked', roundOver: 'vImpOver', end: 'vEnd',
   }[s.phase] : {
@@ -395,51 +393,51 @@ function render(s) {
       $('changeName').classList.toggle('hidden', !(said || imp));
       $('lobbyPlayers').textContent = `${s.players} Spieler in der Lobby` + (s.mode === 'open' ? ` · ${s.submissions} Fragen eingereicht` : '');
       $('subForm').classList.toggle('hidden', !s.allowSubmit);
-      $('subTitle').textContent = said ? 'Eigene Meinungsfrage einreichen' : 'Deine Fragen einreichen';
+      $('subTitle').textContent = said ? 'Eigene Frage vorschlagen' : 'Fragen einreichen';
       $('subHint').textContent = said
-        ? 'Optional: Schlag eine Frage vor, die jemand anderes beantworten soll. Anonym – der Host entscheidet, ob sie ins Spiel kommt. Mehrere? Jede in eine neue Zeile.'
-        : 'Anonym – niemand sieht, von wem die Frage kommt. Mehrere? Jede in eine neue Zeile.';
+        ? 'Anonym. Mehrere? Jede in eine neue Zeile.'
+        : 'Anonym. Mehrere? Jede in eine neue Zeile.';
       $('subInput').placeholder = said ? 'Was hältst du ehrlich von …?' : 'Wer würde am ehesten …?';
       renderMine();
       break;
     case 'vVoting': {
-      $('vqHead').textContent = `Frage ${s.index + 1} von ${s.totalQuestions}`;
+      $('vqHead').textContent = `${s.index + 1}/${s.totalQuestions}`;
       $('vqText').textContent = s.question;
       const vb = voteButtons(s);
       $('vqOptions').innerHTML = vb.html;
       $('vqOptions').classList.toggle('has-choice', vb.chosen !== null);
       $('vqStatus').textContent = vb.chosen !== null
-        ? `✅ Abgestimmt (anonym) · ${s.voted} von ${s.players} fertig – du kannst noch umentscheiden`
-        : `${s.voted} von ${s.players} haben abgestimmt`;
+        ? `✓ Abgestimmt · ${s.voted}/${s.players}`
+        : `${s.voted}/${s.players}`;
       break;
     }
     case 'vResults':
-      $('rqHead').textContent = `Frage ${s.index + 1} von ${s.totalQuestions}`;
+      $('rqHead').textContent = `${s.index + 1}/${s.totalQuestions}`;
       $('rqText').textContent = s.question;
       if (changed) $('rqResults').innerHTML = resultsHTML(s.options, s.counts);
       break;
     case 'vWriting':
-      $('wHead').textContent = `Runde ${s.round} · Deine Frage`;
+      $('wHead').textContent = `Runde ${s.round}`;
       $('wPrompt').textContent = me.prompt || '…';
       if (changed) { $('wInput').value = me.myAnswer || ''; $('wInput').oninput(); }
       $('wSent').classList.toggle('hidden', !me.myAnswer);
       $('wBtn').textContent = me.myAnswer ? 'Änderung abschicken' : 'Abschicken';
-      $('wProgress').textContent = `${s.written} von ${s.writers} fertig`;
+      $('wProgress').textContent = `${s.written}/${s.writers}`;
       break;
     case 'vGuess': {
-      $('gHead').textContent = `Runde ${s.round} · Aussage ${s.pickIndex + 1} von ${s.picksTotal}`;
+      $('gHead').textContent = `${s.pickIndex + 1}/${s.picksTotal}`;
       $('gSecret').classList.toggle('hidden', !me.isMine);
       if (changed) $('gQuote').innerHTML = quoteHTML(s.prompt, s.quote);
       const vb = voteButtons(s);
       $('gOptions').innerHTML = vb.html;
       $('gOptions').classList.toggle('has-choice', vb.chosen !== null);
       $('gStatus').textContent = vb.chosen !== null
-        ? `✅ Getippt (anonym) · ${s.voted} von ${s.players} – du kannst noch umentscheiden`
-        : `${s.voted} von ${s.players} haben getippt`;
+        ? `✓ Getippt · ${s.voted}/${s.players}`
+        : `${s.voted}/${s.players}`;
       break;
     }
     case 'vReveal':
-      $('xHead').textContent = `Runde ${s.round} · Aussage ${s.pickIndex + 1} von ${s.picksTotal}`;
+      $('xHead').textContent = `${s.pickIndex + 1}/${s.picksTotal}`;
       if (changed) {
         $('xQuote').innerHTML = quoteHTML(s.prompt, s.quote);
         $('xReveal').innerHTML = revealHTML(s.options, s.author, s.counts);
@@ -448,18 +446,18 @@ function render(s) {
       }
       break;
     case 'vRole': {
-      $('roleHead').textContent = `Runde ${s.round} · ${s.impostorCount} Impostor im Spiel`;
+      $('roleHead').textContent = `Runde ${s.round}`;
       $('outBanner').classList.toggle('hidden', me.alive !== false);
       const card = $('roleCard');
       card.className = `role-card ${peek ? me.role : 'covered'}`;
       card.innerHTML = roleCardHTML();
       $('coverBtn').textContent = peek ? 'Verdecken' : me.covered ? 'Nochmal ansehen' : 'Aufdecken';
       $('impRule').classList.toggle('hidden', !(peek && me.role === 'impostor'));
-      $('roleStatus').textContent = `${s.covered.length} von ${s.alive.length} haben verdeckt · Reihum sagt jeder einen passenden Begriff`;
+      $('roleStatus').textContent = `${s.covered.length}/${s.alive.length} verdeckt`;
       break;
     }
     case 'vImpVote': {
-      $('ivHead').textContent = `Runde ${s.round} · Abstimmung`;
+      $('ivHead').textContent = `Runde ${s.round}`;
       const out = me.alive === false || me.myName == null || !s.alive.includes(me.myName);
       $('ivOut').classList.toggle('hidden', !out);
       const chosen = me.voteKey === s.voteKey ? me.myVote : null;
@@ -469,8 +467,8 @@ function render(s) {
         .join('');
       $('ivOptions').classList.toggle('has-choice', chosen !== null);
       $('ivStatus').textContent = chosen !== null
-        ? `✅ Abgestimmt (anonym) · ${s.voted} von ${s.voters} – du kannst noch umentscheiden`
-        : `${s.voted} von ${s.voters} haben abgestimmt`;
+        ? `✓ Abgestimmt · ${s.voted}/${s.voters}`
+        : `${s.voted}/${s.voters}`;
       break;
     }
     case 'vKicked':
@@ -478,14 +476,14 @@ function render(s) {
       if (changed) {
         $('kBanner').innerHTML = kickedHTML(s.options, s.kicked);
         $('kResult').innerHTML = s.result ? impResultHTML(s.options, s.result) + scoreboardHTML(s.options, s.scores) : '';
-        $('kChart').innerHTML = s.counts ? `<h3 class="mini">Abstimmung</h3>${resultsHTML(s.options, s.counts)}` : '';
+        $('kChart').innerHTML = s.counts ? resultsHTML(s.options, s.counts) : '';
         if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
       }
       break;
     case 'vImpOver':
       $('ioHead').textContent = s.phase === 'roles' ? `Runde ${s.round} läuft` : `Runde ${s.round}`;
       $('ioResult').innerHTML = s.phase === 'roles'
-        ? '<div class="card waiting"><div class="emoji">⏳</div><h2>Runde läuft schon</h2><p class="muted">Du bist ab der nächsten Runde dabei.</p></div>'
+        ? '<div class="card waiting"><div class="emoji">⏳</div><h2>Nächste Runde bist du dabei</h2></div>'
         : (s.result ? impResultHTML(s.options, s.result) : '') + scoreboardHTML(s.options, s.scores);
       break;
     case 'vEnd':

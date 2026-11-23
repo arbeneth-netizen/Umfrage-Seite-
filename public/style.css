@@ -533,3 +533,10 @@ html { scroll-padding-bottom: 120px; scroll-padding-top: 80px; }
 @media (min-width: 1100px) { body.playing .topbar-inner, body.playing .pane-tabs { max-width: 1480px; } }
 .play-toggle { white-space: nowrap; }
 @media (max-width: 640px) { #modePill { display: none !important; } }
+
+/* Weniger Text im Spiel */
+.count-line { display: flex; justify-content: flex-end; font-size: 15px; color: var(--muted); margin-top: -6px; }
+.count-line strong { color: var(--text); font-variant-numeric: tabular-nums; }
+.rules-short { list-style: none; padding: 0; margin: 4px 0 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rules-short li { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-weight: 700; text-align: center; }
+.game-foot { margin-top: 18px; }
