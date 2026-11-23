@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-title" content="Votum" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -22,8 +22,14 @@
     <span class="logo"><span id="logoMark"></span>votum</span>
     <span class="grow"></span>
     <span class="pill hidden" id="codePill"></span>
+    <button class="icon-only" id="menuBtn" aria-label="Menü"></button>
   </div>
 </header>
+<div class="menu-pop hidden" id="menuPop">
+  <button class="nav-item" id="mLeave"><span data-ico="leave"></span>Spiel verlassen</button>
+  <a class="nav-item" href="/" style="text-decoration:none"><span data-ico="host"></span>Selbst ein Spiel hosten</a>
+  <button class="nav-item" id="mInstall"><span data-ico="install"></span>Als App installieren</button>
+</div>
 
 <main class="wrap narrow">
 
@@ -66,8 +72,8 @@
       </div>
 
       <form id="subForm" class="card hidden">
-        <h2>✍️ Deine Fragen einreichen</h2>
-        <p class="hint">Anonym – niemand sieht, von wem die Frage kommt. Mehrere? Jede in eine neue Zeile.</p>
+        <h2 id="subTitle">Deine Fragen einreichen</h2>
+        <p class="hint" id="subHint">Anonym – niemand sieht, von wem die Frage kommt. Mehrere? Jede in eine neue Zeile.</p>
         <textarea id="subInput" maxlength="2000" placeholder="Wer würde am ehesten …?"></textarea>
         <div class="spacer"></div>
         <button class="big accent" type="submit">Einreichen</button>
@@ -93,10 +99,25 @@
     </div>
 
     <!-- Schreiben ("Wer hat's gesagt?") -->
+    <div id="vDisclaimer" class="hidden">
+      <div class="q-head" id="dHead"></div>
+      <div class="disclaimer">
+        <h3>Kurz bevor du schreibst</h3>
+        <ul>
+          <li><b>Sei ehrlich.</b> Das Spiel lebt davon, dass ihr wirklich sagt, was ihr denkt.</li>
+          <li><b>Werd konkret.</b> Namen, Zahlen, Details – je spezifischer, desto besser die Diskussion.</li>
+          <li><b>Übertreiben ist erlaubt.</b> Ein bisschen zuspitzen macht’s lustiger – solange der Kern stimmt.</li>
+          <li><b>Bleibt fair.</b> Nichts, was jemanden aus der Runde wirklich verletzt oder bloßstellt.</li>
+        </ul>
+        <p class="muted" style="font-size:14px;margin:0 0 16px">Nur gezogene Aussagen werden gezeigt und aufgelöst. Alle anderen bleiben für immer geheim – auch vor dem Host.</p>
+        <button class="big" type="button" id="dOk">Verstanden – los geht’s</button>
+      </div>
+    </div>
+
     <form id="vWriting" class="hidden">
       <div class="q-head" id="wHead"></div>
       <div class="q-big" id="wPrompt"></div>
-      <p class="muted" style="margin-top:-8px">Schreib ehrlich deine Meinung. Wenn deine Aussage gezogen wird, muss die Gruppe erraten, dass sie von dir ist 😏</p>
+      <div class="note">💬 Ehrlich, konkret, ruhig etwas übertrieben. Wird deine Aussage gezogen, muss die Gruppe erraten, dass sie von dir ist.</div>
       <textarea id="wInput" maxlength="300" placeholder="Deine Meinung …"></textarea>
       <div class="row" style="justify-content:space-between;margin:6px 0 14px"><span class="muted" id="wLen">0 / 300</span><span class="muted" id="wProgress"></span></div>
       <button class="big accent" type="submit" id="wBtn">Abschicken</button>
@@ -125,14 +146,14 @@
     <!-- Rundenende -->
     <div id="vRoundEnd" class="card waiting hidden">
       <div class="emoji">🎉</div>
-      <h2 style="margin-top:8px">Runde geschafft!</h2>
+      <h2 style="margin-top:8px">Runde geschafft</h2>
       <p class="muted">Gleich geht’s weiter<span class="dots"></span></p>
     </div>
 
     <!-- Ende -->
     <div id="vEnd" class="hidden">
       <div class="eyebrow">Spiel vorbei</div>
-      <h2 style="font-size:26px">🏁 Alle Ergebnisse</h2>
+      <h2 style="font-size:26px">Alle Ergebnisse</h2>
       <div id="endSummary"></div>
     </div>
   </section>
@@ -145,6 +166,24 @@
 <script>
 const $ = (id) => document.getElementById(id);
 $('logoMark').innerHTML = LOGO_SVG;
+$('menuBtn').innerHTML = ICONS.menu;
+for (const el of document.querySelectorAll('[data-ico]')) el.innerHTML = ICONS[el.dataset.ico];
+$('menuBtn').onclick = (e) => { e.stopPropagation(); $('menuPop').classList.toggle('hidden'); };
+document.addEventListener('click', (e) => { if (!e.target.closest('#menuPop')) $('menuPop').classList.add('hidden'); });
+$('mLeave').onclick = () => {
+  if (!confirm('Spiel verlassen?')) return;
+  location.href = '/play.html';
+};
+let installEvt = null;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; });
+$('mInstall').onclick = () => {
+  $('menuPop').classList.add('hidden');
+  if (installEvt) { installEvt.prompt(); installEvt = null; }
+  else alert('iPhone: In Safari auf „Teilen“ → „Zum Home-Bildschirm“.\nAndroid: Im Chrome-Menü (⋮) → „App installieren“.');
+};
+// Hinweis vor dem Schreiben: einmal pro Runde bestätigen
+let ackRound = null;
+$('dOk').onclick = () => { ackRound = state.round; render(state); setTimeout(() => $('wInput').focus(), 50); };
 
 // Anonyme Geräte-ID: nur damit jeder einmal pro Frage abstimmt
 function deviceId() {
@@ -256,18 +295,19 @@ function render(s) {
   $('vJoin').classList.add('hidden');
   $('vGame').classList.remove('hidden');
   $('gTitle').textContent = s.title;
-  $('gEyebrow').textContent = `${MODES[s.mode].emoji} ${MODES[s.mode].name}`;
+  $('gEyebrow').textContent = MODES[s.mode].name;
   $('codePill').textContent = `Code ${s.code}`;
   $('codePill').classList.remove('hidden');
 
   const said = s.mode === 'said';
   const needName = said && (me.myName == null || wantRename) && ['lobby', 'writing', 'roundEnd'].includes(s.phase);
-  const view = needName ? 'vClaim' : {
+  const needAck = said && s.phase === 'writing' && !needName && ackRound !== s.round && !me.myAnswer;
+  const view = needName ? 'vClaim' : needAck ? 'vDisclaimer' : {
     lobby: 'vLobby', voting: 'vVoting', results: 'vResults', writing: 'vWriting',
     guess: 'vGuess', reveal: 'vReveal', roundEnd: 'vRoundEnd', end: 'vEnd',
   }[s.phase];
   const changed = !prev || prev.phase !== s.phase || prev.voteKey !== s.voteKey || $(view).classList.contains('hidden');
-  for (const v of ['vClaim', 'vLobby', 'vVoting', 'vResults', 'vWriting', 'vGuess', 'vReveal', 'vRoundEnd', 'vEnd']) {
+  for (const v of ['vClaim', 'vDisclaimer', 'vLobby', 'vVoting', 'vResults', 'vWriting', 'vGuess', 'vReveal', 'vRoundEnd', 'vEnd']) {
     $(v).classList.toggle('hidden', v !== view);
     if (v === view && changed) { $(v).classList.remove('view'); void $(v).offsetWidth; $(v).classList.add('view'); }
   }
@@ -281,11 +321,19 @@ function render(s) {
         })
         .join('');
       break;
+    case 'vDisclaimer':
+      $('dHead').textContent = `Runde ${s.round}`;
+      break;
     case 'vLobby':
       $('lobbyHello').textContent = said && me.myName != null ? `Hi ${s.options[me.myName]}! 👋` : 'Du bist drin!';
       $('changeName').classList.toggle('hidden', !said);
       $('lobbyPlayers').textContent = `${s.players} Spieler in der Lobby` + (s.mode === 'open' ? ` · ${s.submissions} Fragen eingereicht` : '');
-      $('subForm').classList.toggle('hidden', s.mode !== 'open');
+      $('subForm').classList.toggle('hidden', !s.allowSubmit);
+      $('subTitle').textContent = said ? 'Eigene Meinungsfrage einreichen' : 'Deine Fragen einreichen';
+      $('subHint').textContent = said
+        ? 'Optional: Schlag eine Frage vor, die jemand anderes beantworten soll. Anonym – der Host entscheidet, ob sie ins Spiel kommt. Mehrere? Jede in eine neue Zeile.'
+        : 'Anonym – niemand sieht, von wem die Frage kommt. Mehrere? Jede in eine neue Zeile.';
+      $('subInput').placeholder = said ? 'Was hältst du ehrlich von …?' : 'Wer würde am ehesten …?';
       renderMine();
       break;
     case 'vVoting': {

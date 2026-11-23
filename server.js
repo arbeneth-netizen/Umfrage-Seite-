@@ -98,6 +98,7 @@ function publicState(room) {
     phase: room.phase,
     players: room.players.size,
     submissions: room.submissions.length,
+    allowSubmit: canSubmit(room),
     totalQuestions: room.questions.length,
     voteKey: room.voteKey,
     voted: votes ? votes.size : 0,
@@ -136,7 +137,16 @@ function publicState(room) {
 }
 
 // Nur für den Host: komplette Fragenliste + eingereichte Fragen (ohne Absender)
-const hostInfo = (room) => ({ code: room.code, questions: room.questions, submissions: room.submissions });
+// Bei "Wer hat's gesagt?" zusätzlich: wer welche Frage bekommen und schon beantwortet hat (ohne Antworttext)
+const hostInfo = (room) => ({
+  code: room.code,
+  questions: room.questions,
+  submissions: room.submissions,
+  assignments: room.mode === 'said'
+    ? [...room.claims].map(([pid, name]) => ({ name, prompt: room.assign.get(pid) ?? null, done: room.answers.has(pid) }))
+    : [],
+});
+const canSubmit = (room) => room.mode === 'open' || (room.mode === 'said' && room.allowSubmit);
 
 // Nur für den jeweiligen Spieler: sein Name, seine Frage, seine Antwort, seine Stimme
 function privateInfo(room, pid) {
@@ -204,6 +214,7 @@ io.on('connection', (socket) => {
       hostToken: newToken(),
       title,
       mode,
+      allowSubmit: payload?.allowSubmit !== false,
       options,
       questions,
       submissions: [], // { id, text } – ohne Absender
@@ -391,7 +402,7 @@ io.on('connection', (socket) => {
     const room = playerRoom();
     if (!room) return ack?.({ error: 'Nicht im Spiel.' });
     const pid = socket.data.pid;
-    if (room.mode !== 'open') return ack?.({ error: 'In diesem Spiel stellt der Host die Fragen.' });
+    if (!canSubmit(room)) return ack?.({ error: 'In diesem Spiel stellt der Host die Fragen.' });
     if (room.phase !== 'lobby') return ack?.({ error: 'Das Spiel läuft schon.' });
     const texts = cleanList(String(payload?.text || '').split('\n'), 10, 200);
     if (!texts.length) return ack?.({ error: 'Bitte eine Frage eintippen.' });
