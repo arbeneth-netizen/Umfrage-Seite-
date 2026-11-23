@@ -16,6 +16,7 @@ const MODES = {
   open: { name: 'Fragen-Mix', emoji: '✍️' },
   said: { name: 'Wer hat’s gesagt?', emoji: '🕵️' },
   impostor: { name: 'Impostor', emoji: '🎭' },
+  quiz: { name: 'Wer fliegt?', emoji: '🧠' },
 };
 
 // Logo: kleines Kreisdiagramm
@@ -43,6 +44,7 @@ const ICONS = {
   help: ICON('<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.9.8c0 1.7-2.4 2.2-2.4 3.7M12 17h.01"/>'),
   install: ICON('<path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/>'),
   play: ICON('<path d="M7 4l12 8-12 8z"/>'),
+  quiz: ICON('<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.9.8c0 1.7-2.4 2.2-2.4 3.7M12 17h.01"/>'),
   user: ICON('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'),
   impostor: ICON('<path d="M12 3c-4 0-7 3-7 7v9l2.5-2 2 2 2.5-2 2.5 2 2-2 2.5 2v-9c0-4-3-7-7-7z"/><path d="M9 10h.01M15 10h.01"/>'),
   cards: ICON('<rect x="3" y="6" width="13" height="15" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v13"/>'),
@@ -173,6 +175,27 @@ function scoreboardHTML(options, scores) {
 
 // Zusammenfassung am Spielende
 function summaryHTML(s) {
+  if (s.mode === 'quiz') {
+    const name = (i) => esc(s.options[i]);
+    let html = s.winner != null
+      ? `<div class="verdict" style="--c:${colorFor(s.winner)}"><div class="small">Gewinner</div><div class="name">${name(s.winner)}</div>${s.finalScore ? `<div class="sub2">${s.finalScore[0]} : ${s.finalScore[1]} im Finale</div>` : ''}</div>`
+      : `<div class="verdict neutral"><div class="small">Ergebnis</div><div class="name">Unentschieden</div>${s.finalScore ? `<div class="sub2">${s.finalScore[0]} : ${s.finalScore[1]}</div>` : ''}</div>`;
+    if (s.finalRows) {
+      const [a, b] = s.finalists;
+      html += `<div class="final-table"><div class="ft-row ft-head"><span>${name(a)}</span><span>Lösung</span><span>${name(b)}</span></div>${s.finalRows
+        .map((r, i) => {
+          const ga = r.pt === 0 || r.pt === 'both', gb = r.pt === 1 || r.pt === 'both';
+          return `<div class="ft-q">${i + 1}. ${esc(r.q)}</div><div class="ft-row"><span class="${ga ? 'won' : ''}">${esc(r.ans[0])}</span><span class="sol">${esc(r.a)}</span><span class="${gb ? 'won' : ''}">${esc(r.ans[1])}</span></div>`;
+        })
+        .join('')}</div>`;
+    }
+    if (s.outOrder && s.outOrder.length) {
+      html += `<div class="scoreboard"><div class="sec-label">Rausgeflogen</div>${s.outOrder
+        .map((n, k) => `<div class="score-row"><span class="rank">${k + 1}.</span><span class="dot" style="background:${colorFor(n)}"></span><b>${name(n)}</b></div>`)
+        .join('')}</div>`;
+    }
+    return html;
+  }
   if (s.mode === 'impostor') {
     const rounds = (s.summary || [])
       .map((h) => `<div class="summary-item"><div class="q-head">Runde ${h.round}</div>${impResultHTML(s.options, h)}</div>`)

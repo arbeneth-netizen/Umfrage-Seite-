@@ -8,6 +8,7 @@
 //   open – alle reichen in der Lobby Fragen ein, der Host wählt aus
 //   said – "Wer hat's gesagt?": jeder beantwortet eine Meinungsfrage, 1–4 Aussagen
 //          werden gezogen, die Gruppe rät, von wem sie stammen
+//   quiz – "Wer fliegt?": Moderator stellt reihum Fragen, Gruppe stimmt ab, wer ein Leben verliert
 //   impostor – alle bekommen dasselbe Wort, nur die Impostor nicht; die Gruppe
 //          versucht per Abstimmung die Impostor rauszuwerfen
 
@@ -16,6 +17,7 @@ const http = require('http');
 const express = require('express');
 const QRCode = require('qrcode');
 const { Server } = require('socket.io');
+const quiz = require('./quiz-mode');
 
 const PORT = process.env.PORT || 3000;
 const MAX_QUESTIONS = 300;
@@ -121,6 +123,7 @@ function publicState(room) {
   };
 
   if (room.mode === 'impostor') return impostorState(room, base);
+  if (room.mode === 'quiz') return quiz.quizState(room, base, tally);
 
   if (room.mode !== 'said') {
     const q = room.current;
@@ -226,6 +229,7 @@ const hostInfo = (room) => ({
   assignments: room.mode === 'said'
     ? [...room.claims].map(([pid, name]) => ({ name, prompt: room.assign.get(pid) ?? null, done: room.answers.has(pid) }))
     : [],
+  ...(room.mode === 'quiz' ? { quiz: quiz.quizHostInfo(room) } : {}),
 });
 const canSubmit = (room) => room.mode === 'open' || (room.mode === 'said' && room.allowSubmit);
 
@@ -241,6 +245,7 @@ function privateInfo(room, pid) {
     voteKey: room.voteKey,
     myVote: currentVotes(room)?.get(pid) ?? null,
     ...(room.mode === 'impostor' ? impostorPrivate(room, pid) : {}),
+    ...(room.mode === 'quiz' ? quiz.quizPrivate(room, pid) : {}),
   };
 }
 function impostorPrivate(room, pid) {
@@ -296,7 +301,7 @@ io.on('connection', (socket) => {
   // ================= Host =================
   socket.on('host:create', (payload, ack) => {
     const title = String(payload?.title || '').trim().slice(0, 120) || 'Wer würde am ehesten …?';
-    const mode = ['host', 'open', 'said', 'impostor'].includes(payload?.mode) ? payload.mode : 'host';
+    const mode = ['host', 'open', 'said', 'impostor', 'quiz'].includes(payload?.mode) ? payload.mode : 'host';
     const options = cleanList(payload?.options, 30, 40);
     const questions = cleanList(payload?.questions, MAX_QUESTIONS, 200);
     const perRound = Math.min(4, Math.max(1, Number(payload?.perRound) || 2));
@@ -304,6 +309,8 @@ io.on('connection', (socket) => {
     const words = cleanWords(payload?.words);
     if ((mode === 'host' || mode === 'said') && questions.length < 1) return ack?.({ error: 'Bitte mindestens 1 Frage auswählen.' });
     if (mode === 'impostor' && !words.length) return ack?.({ error: 'Bitte mindestens ein Wort-Deck auswählen.' });
+    const qz = mode === 'quiz' ? quiz.initQuiz(payload, options.length) : null;
+    if (qz && !qz.pool.length) return ack?.({ error: 'Bitte mindestens eine Fragen-Stufe auswählen.' });
 
     const code = newCode();
     const room = {
@@ -345,8 +352,10 @@ io.on('connection', (socket) => {
       kicked: null,
       result: null,
       scores: new Map(),
+      qz,
       touched: Date.now(),
     };
+    room._openVote = () => openVote(room);
     rooms.set(code, room);
     socket.join([code, code + ':host']);
     ack?.({ code, token: room.hostToken, state: publicState(room), info: hostInfo(room) });
@@ -374,6 +383,10 @@ io.on('connection', (socket) => {
     // Schutz vor Doppelklicks: nur weiterschalten, wenn wir noch in der erwarteten Phase sind
     if (payload?.from && payload.from !== room.phase) return ack?.({ ok: true });
 
+    if (room.mode === 'quiz') {
+      if (quiz.quizNext(room, ack)) broadcast(room);
+      return;
+    }
     if (room.mode === 'impostor') {
       switch (room.phase) {
         case 'lobby':
@@ -533,6 +546,10 @@ io.on('connection', (socket) => {
   socket.on('host:reveal', (payload) => {
     const room = hostRoom(payload);
     if (!room) return;
+    if (room.mode === 'quiz') {
+      if (quiz.quizReveal(room, tally)) broadcast(room);
+      return;
+    }
     if (room.mode === 'impostor') {
       if (room.phase !== 'voting') return;
       resolveImpostorVote(room);
@@ -556,6 +573,8 @@ io.on('connection', (socket) => {
     broadcast(room);
   });
 
+  quiz.registerQuiz(socket, { hostRoom, playerRoom: () => { const r = rooms.get(socket.data.code); return r && socket.data.pid ? r : null; }, broadcast });
+
   // ================= Spieler =================
   socket.on('player:join', (payload, ack) => {
     const room = rooms.get(String(payload?.code || '').trim().toUpperCase());
@@ -578,7 +597,10 @@ io.on('connection', (socket) => {
   // Namen wählen ("Wer hat's gesagt?")
   socket.on('player:claim', (payload, ack) => {
     const room = playerRoom();
-    if (!room || !['said', 'impostor'].includes(room.mode)) return ack?.({ error: 'Nicht möglich.' });
+    if (!room || !['said', 'impostor', 'quiz'].includes(room.mode)) return ack?.({ error: 'Nicht möglich.' });
+    if (room.mode === 'quiz' && room.phase !== 'lobby' && room.claims.has(socket.data.pid) && room.qz.players.includes(room.claims.get(socket.data.pid))) {
+      return ack?.({ error: 'Während des Spiels kannst du deinen Namen nicht ändern.' });
+    }
     const pid = socket.data.pid;
     const opt = Number(payload?.option);
     if (room.mode === 'impostor' && room.alive.has(pid) && !['lobby', 'roundOver'].includes(room.phase)) {
@@ -644,11 +666,17 @@ io.on('connection', (socket) => {
   socket.on('player:vote', (payload, ack) => {
     const room = playerRoom();
     if (!room) return ack?.({ error: 'Nicht im Spiel.' });
-    if (!['voting', 'guess'].includes(room.phase) || payload?.key !== room.voteKey) {
+    if (!['voting', 'guess', 'vote'].includes(room.phase) || payload?.key !== room.voteKey) {
       return ack?.({ error: 'Abstimmung ist schon vorbei.' });
     }
     const opt = Number(payload?.option);
     if (!Number.isInteger(opt) || opt < 0 || opt >= room.options.length) return ack?.({ error: 'Ungültige Auswahl.' });
+    if (room.mode === 'quiz') {
+      const me = room.claims.get(socket.data.pid);
+      if (me == null || !quiz.isAlive(room.qz, me) || !room.qz.players.includes(me)) return ack?.({ error: 'Du kannst nicht mehr abstimmen.' });
+      if (!room.qz.candidates.includes(opt)) return ack?.({ error: 'Diese Person steht nicht zur Wahl.' });
+      if (me === opt) return ack?.({ error: 'Du kannst nicht für dich selbst stimmen.' });
+    }
     if (room.mode === 'impostor') {
       if (!room.alive.has(socket.data.pid)) return ack?.({ error: 'Du bist raus und kannst nicht mehr abstimmen.' });
       if (!aliveNames(room).includes(opt)) return ack?.({ error: 'Dieser Spieler ist schon raus.' });

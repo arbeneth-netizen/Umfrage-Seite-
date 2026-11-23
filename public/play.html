@@ -179,6 +179,49 @@
 
     </div>
 
+    <!-- ===== Wer fliegt? ===== -->
+    <div id="vQPlay" class="hidden">
+      <div class="qz-top"><span class="q-head" id="qpRound"></span><span class="timer" id="qpTimer"></span></div>
+      <div class="secret hidden" id="qpOut">Du bist raus</div>
+      <div class="turn-card" id="qpTurn"></div>
+      <div class="qp-hearts" id="qpHearts"></div>
+    </div>
+
+    <div id="vQVote" class="hidden">
+      <div class="q-big">Wer verliert ein Leben?</div>
+      <div class="secret hidden" id="qvOut">Du stimmst nicht mit ab</div>
+      <div class="vote-grid" id="qvOptions"></div>
+      <p class="center muted" id="qvStatus" style="margin-top:16px"></p>
+    </div>
+
+    <div id="vQTie" class="card waiting hidden">
+      <div class="emoji">⚖️</div>
+      <h2>Gleichstand</h2>
+    </div>
+
+    <div id="vQLoss" class="hidden">
+      <div id="qlBanner"></div>
+      <div class="qp-hearts" id="qlHearts"></div>
+    </div>
+
+    <form id="vQFinal" class="hidden">
+      <div class="qz-top"><span class="q-head" id="qfHead"></span></div>
+      <div id="qfAsk">
+        <div class="q-big" id="qfQ"></div>
+        <input type="text" id="qfInput" maxlength="200" autocomplete="off" placeholder="Deine Antwort" />
+        <div class="spacer"></div>
+        <button class="big" type="submit">Weiter</button>
+      </div>
+      <div class="card waiting hidden" id="qfWait"><div class="emoji" id="qfEmoji">✅</div><h2 id="qfWaitTitle">Fertig</h2><p class="muted" id="qfWaitSub"></p></div>
+    </form>
+
+    <div id="vQReview" class="hidden">
+      <div class="qz-top"><span class="q-head" id="qrHead"></span><span class="score-big" id="qrScore"></span></div>
+      <div class="q-big" id="qrQ" style="font-size:24px"></div>
+      <div class="solution"><span class="sec-label">Lösung</span><b id="qrSol"></b></div>
+      <div class="review-grid two" id="qrAns"></div>
+    </div>
+
     <div id="vEnd" class="hidden">
       <div class="eyebrow">Spiel vorbei</div>
       <h2 style="font-size:26px">Ergebnisse</h2>
@@ -259,7 +302,7 @@ socket.on('private', (p) => { if (p.code === code) { me = p; if (state) render(s
 
 // ---------- Aktionen ----------
 function vote(option) {
-  if (!state || !['voting', 'guess'].includes(state.phase)) return;
+  if (!state || !['voting', 'guess', 'vote'].includes(state.phase)) return;
   socket.emit('player:vote', { key: state.voteKey, option }, (res) => {
     if (res.error) toast(res.error);
     else if (navigator.vibrate) navigator.vibrate(15);
@@ -343,7 +386,7 @@ function voteButtons(s) {
 function render(s) {
   const prev = state;
   state = s;
-  document.body.classList.remove('m-host', 'm-open', 'm-said', 'm-impostor');
+  document.body.classList.remove('m-host', 'm-open', 'm-said', 'm-impostor', 'm-quiz');
   document.body.classList.add(`m-${s.mode}`);
   $('vJoin').classList.add('hidden');
   $('vGame').classList.remove('hidden');
@@ -357,18 +400,22 @@ function render(s) {
 
   const said = s.mode === 'said';
   const imp = s.mode === 'impostor';
+  const qz = s.mode === 'quiz';
   if (imp && peekRound !== s.round) { peekRound = s.round; peek = false; }
   const needName = (said && (me.myName == null || wantRename) && ['lobby', 'writing', 'roundEnd'].includes(s.phase))
-    || (imp && s.phase !== 'end' && (me.myName == null || (wantRename && ['lobby', 'roundOver'].includes(s.phase))));
+    || (imp && s.phase !== 'end' && (me.myName == null || (wantRename && ['lobby', 'roundOver'].includes(s.phase))))
+    || (qz && (s.phase === 'lobby' ? (me.myName == null || wantRename) : false));
   const needAck = said && s.phase === 'writing' && !needName && ackRound === null && !me.myAnswer;
-  const view = needName ? 'vClaim' : needAck ? 'vDisclaimer' : imp ? {
+  const view = needName ? 'vClaim' : needAck ? 'vDisclaimer' : qz ? {
+    lobby: 'vLobby', round: 'vQPlay', vote: 'vQVote', tie: 'vQTie', loss: 'vQLoss', final: 'vQFinal', review: 'vQReview', end: 'vEnd',
+  }[s.phase] : imp ? {
     lobby: 'vLobby', roles: me.role ? 'vRole' : 'vImpOver', voting: 'vImpVote', kicked: 'vKicked', roundOver: 'vImpOver', end: 'vEnd',
   }[s.phase] : {
     lobby: 'vLobby', voting: 'vVoting', results: 'vResults', writing: 'vWriting',
     guess: 'vGuess', reveal: 'vReveal', roundEnd: 'vRoundEnd', end: 'vEnd',
   }[s.phase];
   const changed = !prev || prev.phase !== s.phase || prev.voteKey !== s.voteKey || $(view).classList.contains('hidden');
-  for (const v of ['vClaim', 'vDisclaimer', 'vLobby', 'vVoting', 'vResults', 'vWriting', 'vGuess', 'vReveal', 'vRoundEnd', 'vRole', 'vImpVote', 'vKicked', 'vImpOver', 'vEnd']) {
+  for (const v of ['vClaim', 'vDisclaimer', 'vLobby', 'vVoting', 'vResults', 'vWriting', 'vGuess', 'vReveal', 'vRoundEnd', 'vRole', 'vImpVote', 'vKicked', 'vImpOver', 'vQPlay', 'vQVote', 'vQTie', 'vQLoss', 'vQFinal', 'vQReview', 'vEnd']) {
     $(v).classList.toggle('hidden', v !== view);
     if (v === view && changed) { $(v).classList.remove('view'); void $(v).offsetWidth; $(v).classList.add('view'); }
   }
@@ -389,8 +436,8 @@ function render(s) {
       $('dHead').textContent = `Runde ${s.round}`;
       break;
     case 'vLobby':
-      $('lobbyHello').textContent = (said || imp) && me.myName != null ? `Hi ${s.options[me.myName]}! 👋` : 'Du bist drin!';
-      $('changeName').classList.toggle('hidden', !(said || imp));
+      $('lobbyHello').textContent = (said || imp || qz) && me.myName != null ? `Hi ${s.options[me.myName]}! 👋` : 'Du bist drin!';
+      $('changeName').classList.toggle('hidden', !(said || imp || qz));
       $('lobbyPlayers').textContent = `${s.players} Spieler in der Lobby` + (s.mode === 'open' ? ` · ${s.submissions} Fragen eingereicht` : '');
       $('subForm').classList.toggle('hidden', !s.allowSubmit);
       $('subTitle').textContent = said ? 'Eigene Frage vorschlagen' : 'Fragen einreichen';
@@ -486,11 +533,93 @@ function render(s) {
         ? '<div class="card waiting"><div class="emoji">⏳</div><h2>Nächste Runde bist du dabei</h2></div>'
         : (s.result ? impResultHTML(s.options, s.result) : '') + scoreboardHTML(s.options, s.scores);
       break;
+    case 'vQPlay': {
+      clockOffset = s.now - Date.now();
+      $('qpRound').textContent = `Runde ${s.round}`;
+      $('qpOut').classList.toggle('hidden', !(me.inGame && !me.alive));
+      const t = s.turn;
+      $('qpTurn').className = `turn-card${me.isTurn ? ' me' : ''}`;
+      $('qpTurn').innerHTML = s.roundDone ? '<b>Runde vorbei</b>'
+        : me.isTurn ? '<span>Du bist dran!</span>'
+        : t != null ? `<span class="small">Dran ist</span><b style="color:${colorFor(t)}">${esc(s.options[t])}</b>` : '';
+      $('qpHearts').innerHTML = heartsHTML(s);
+      qTick();
+      break;
+    }
+    case 'vQVote': {
+      const can = me.inGame && me.alive;
+      $('qvOut').classList.toggle('hidden', can);
+      const chosen = me.voteKey === s.voteKey ? me.myVote : null;
+      $('qvOptions').innerHTML = can ? s.candidates.filter((i) => i !== me.myName)
+        .map((i) => `<button class="vote-btn${chosen === i ? ' chosen' : ''}" data-i="${i}" style="background:${colorFor(i)}">${esc(s.options[i])}</button>`).join('') : '';
+      $('qvOptions').classList.toggle('has-choice', chosen !== null);
+      $('qvStatus').textContent = chosen !== null ? `✓ Abgestimmt · ${s.voted}/${s.voters}` : `${s.voted}/${s.voters}`;
+      break;
+    }
+    case 'vQLoss': {
+      const l = s.loss;
+      if (changed) $('qlBanner').innerHTML = `<div class="verdict" style="--c:${colorFor(l.name)}"><div class="name">${esc(s.options[l.name])}</div><div class="sub2">${l.out ? 'ist raus' : `−1 ♥ · noch ${l.lives}`}</div></div>`;
+      $('qlHearts').innerHTML = heartsHTML(s);
+      break;
+    }
+    case 'vQFinal': {
+      const fin = me.finalist >= 0;
+      $('qfHead').textContent = fin && me.finalNext ? `Finale · ${me.finalNext.idx + 1}/10` : 'Finale';
+      $('qfAsk').classList.toggle('hidden', !(fin && me.finalNext));
+      $('qfWait').classList.toggle('hidden', !!(fin && me.finalNext));
+      if (fin && me.finalNext) {
+        if ($('qfQ').dataset.idx !== String(me.finalNext.idx)) {
+          $('qfQ').dataset.idx = me.finalNext.idx;
+          $('qfQ').textContent = me.finalNext.q;
+          $('qfInput').value = '';
+          setTimeout(() => $('qfInput').focus(), 50);
+        }
+      } else {
+        $('qfEmoji').textContent = fin ? '✅' : '🏁';
+        $('qfWaitTitle').textContent = fin ? 'Fertig' : s.finalists.map((n) => s.options[n]).join(' vs ');
+        $('qfWaitSub').textContent = s.finalists.map((n, i) => `${s.options[n]} ${s.finalProgress[i]}/10`).join(' · ');
+      }
+      break;
+    }
+    case 'vQReview': {
+      const r = s.review;
+      $('qrHead').textContent = `${r.idx + 1}/10`;
+      $('qrScore').textContent = `${s.finalScore[0]} : ${s.finalScore[1]}`;
+      $('qrQ').textContent = r.q;
+      $('qrSol').textContent = r.a;
+      $('qrAns').innerHTML = s.finalists.map((n, i) => {
+        const won = r.point === i || r.point === 'both';
+        return `<div class="ans-box${won ? ' won' : ''}"><span class="who" style="background:${colorFor(n)}">${esc(s.options[n])}</span><span class="ans">${esc(r.answers[i])}</span></div>`;
+      }).join('');
+      break;
+    }
     case 'vEnd':
       if (changed) $('endSummary').innerHTML = summaryHTML(s);
       break;
   }
 }
+
+// ---------- Wer fliegt? ----------
+let clockOffset = 0;
+function heartsHTML(s) {
+  return s.qPlayers
+    .map((n, i) => `<span class="hp${s.lives[i] ? '' : ' out'}${n === me.myName ? ' mine' : ''}"><span class="dot" style="background:${colorFor(n)}"></span>${esc(s.options[n])} <b>${'♥'.repeat(s.lives[i])}<i>${'♥'.repeat(Math.max(0, s.maxLives - s.lives[i]))}</i></b></span>`)
+    .join('');
+}
+function qTick() {
+  if (!state || state.mode !== 'quiz' || state.phase !== 'round') return;
+  if (state.roundType !== 'time') { $('qpTimer').textContent = `${state.asked}/${state.askTotal}`; return; }
+  const t = state.timer;
+  const left = Math.max(0, Math.ceil(t.running ? (t.endsAt - (Date.now() + clockOffset)) / 1000 : t.remaining));
+  $('qpTimer').textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+}
+setInterval(qTick, 250);
+$('qvOptions').onclick = (e) => { const b = e.target.closest('button[data-i]'); if (b) vote(+b.dataset.i); };
+$('vQFinal').onsubmit = (e) => {
+  e.preventDefault();
+  if (!me.finalNext) return;
+  socket.emit('player:finalAnswer', { idx: me.finalNext.idx, text: $('qfInput').value });
+};
 </script>
 </body>
 </html>

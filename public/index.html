@@ -44,6 +44,7 @@
     <button class="nav-item" data-newmode="open"><span data-ico="open"></span>Fragen-Mix<span class="dotc" style="background:var(--blue)"></span></button>
     <button class="nav-item" data-newmode="said"><span data-ico="said"></span>Wer hat’s gesagt?<span class="dotc" style="background:var(--purple)"></span></button>
     <button class="nav-item" data-newmode="impostor"><span data-ico="impostor"></span>Impostor<span class="dotc" style="background:#111114"></span></button>
+    <button class="nav-item" data-newmode="quiz"><span data-ico="quiz"></span>Wer fliegt?<span class="dotc" style="background:#0F9D76"></span></button>
     <div class="label">App</div>
     <button class="nav-item" id="navArchive"><span data-ico="archive"></span>Archiv</button>
     <button class="nav-item" id="navDecks"><span data-ico="cards"></span>Wort-Decks</button>
@@ -85,10 +86,16 @@
         <span class="tile-go">›</span>
       </button>
       <button class="tile t-impostor" data-mode="impostor">
-        <span class="tile-badge">NEU</span>
         <span class="tile-ico" data-ico="impostor"></span>
         <span class="tile-name">Impostor</span>
         <span class="tile-desc">Einer kennt das Wort nicht.</span>
+        <span class="tile-go">›</span>
+      </button>
+      <button class="tile t-quiz wide" data-mode="quiz">
+        <span class="tile-badge">NEU</span>
+        <span class="tile-ico" data-ico="quiz"></span>
+        <span class="tile-name">Wer fliegt?</span>
+        <span class="tile-desc">Quiz mit Moderator. Wer’s nicht weiß, verliert Leben.</span>
         <span class="tile-go">›</span>
       </button>
     </div>
@@ -139,6 +146,7 @@
       <div class="help-mode"><div class="icon" data-ico="host" style="color:var(--red);background:#fdecee"></div><div><b>Klassisch</b><p>Du wählst die Fragen. Alle stimmen anonym ab, wer am ehesten … – dann Kreisdiagramm.</p></div></div>
       <div class="help-mode"><div class="icon" data-ico="open" style="color:var(--blue);background:#e9f2fd"></div><div><b>Fragen-Mix</b><p>Alle tippen in der Lobby eigene Fragen ein. Du nimmst so viele ins Spiel, wie du willst.</p></div></div>
       <div class="help-mode"><div class="icon" data-ico="said" style="color:var(--purple);background:#f4ecf8"></div><div><b>Wer hat’s gesagt?</b><p>Jeder beantwortet eine Meinungsfrage. 1–4 Aussagen werden zitiert, ihr ratet, wer es war.</p></div></div>
+      <div class="help-mode"><div class="icon" data-ico="quiz" style="color:#0F9D76;background:#e5f6f1"></div><div><b>Wer fliegt?</b><p>Du moderierst und liest vor – du spielst nicht mit. Jeder hat Leben. Pro Runde stellst du reihum Fragen (auf Zeit oder feste Anzahl) und tippst Richtig/Falsch. Danach stimmen alle ab, wer ein Leben verliert – wer alles richtig hatte, ist geschützt (du kannst ihn trotzdem freigeben). Die letzten zwei spielen ein Finale mit 10 Fragen am Handy, du vergibst die Punkte.</p></div></div>
       <div class="help-mode"><div class="icon" data-ico="impostor" style="color:#fff;background:#111114"></div><div><b>Impostor</b><p>Alle bekommen dasselbe Wort – nur die Impostor nicht (sie bekommen höchstens einen Tipp). Reihum sagt jeder einen passenden Begriff. Dann wird abgestimmt, wer rausfliegt. Kennt ein Impostor das Wort, ruft er es rein: richtig = Impostor gewinnen, falsch = er fliegt.</p></div></div>
     </div>
     <div class="panel" id="installHelp">
@@ -189,8 +197,30 @@
       <div class="toolbar"><button class="ghost small" id="editDecks">Decks bearbeiten / eigenes Deck</button></div>
     </div>
 
+    <!-- Fragen (Wer fliegt?) -->
+    <div class="panel hidden" id="quizSummary">
+      <div class="sec-row"><div class="sec-label">Fragen</div><span class="count-pill" id="quizCount"></span></div>
+      <div class="level-chips" id="levelChips"></div>
+      <details class="sel-details" style="margin-top:12px">
+        <summary>Eigene Fragen <span id="quizOwnCount"></span></summary>
+        <p class="muted" style="font-size:14px;margin:8px 0">Eine pro Zeile: <b>Frage | Lösung</b></p>
+        <textarea id="quizOwn" placeholder="Wie heißt unser Trainer mit Nachnamen? | Müller"></textarea>
+      </details>
+    </div>
+
     <div class="panel">
       <div class="sec-label">Optionen</div>
+      <div id="optQuiz" class="hidden">
+        <div class="setting"><span class="txt"><b>Leben</b></span>
+          <div class="segmented" id="qLives"><button type="button" data-n="1">1</button><button type="button" data-n="2">2</button><button type="button" data-n="3">3</button><button type="button" data-n="4">4</button><button type="button" data-n="5">5</button></div></div>
+        <div class="setting"><span class="txt"><b>Runde</b></span>
+          <div class="segmented" id="qType"><button type="button" data-v="time">Auf Zeit</button><button type="button" data-v="count">Feste Anzahl</button></div></div>
+        <div class="setting" id="qTimeRow"><span class="txt"><b>Zeit pro Runde</b></span>
+          <div class="row" style="gap:6px"><div class="segmented" id="qTimePre"><button type="button" data-n="60">1:00</button><button type="button" data-n="120">2:00</button><button type="button" data-n="180">3:00</button></div>
+          <input type="number" id="qTime" min="10" max="1800" step="5" class="num-input" /><span class="muted">Sek.</span></div></div>
+        <div class="setting hidden" id="qCountRow"><span class="txt"><b>Fragen pro Spieler</b></span>
+          <div class="segmented" id="qPer"><button type="button" data-n="1">1</button><button type="button" data-n="2">2</button><button type="button" data-n="3">3</button><button type="button" data-n="4">4</button><button type="button" data-n="5">5</button></div></div>
+      </div>
       <div id="optSaid" class="hidden">
         <div class="setting"><span class="txt"><b>Aussagen pro Runde</b></span>
           <div class="segmented" id="perRound"><button type="button" data-n="1">1</button><button type="button" data-n="2">2</button><button type="button" data-n="3">3</button><button type="button" data-n="4">4</button></div></div>
@@ -203,7 +233,7 @@
         <label class="setting"><span class="txt"><b>Tipp für Impostor</b></span>
           <span class="switch"><input type="checkbox" id="setupHints" /><span></span></span></label>
       </div>
-      <label class="setting"><span class="txt"><b>Ich spiele auf diesem Gerät mit</b></span>
+      <label class="setting" id="hostPlaysRow"><span class="txt"><b>Ich spiele auf diesem Gerät mit</b></span>
         <span class="switch"><input type="checkbox" id="setupHostPlays" /><span></span></span></label>
     </div>
 
@@ -246,6 +276,11 @@
           <div class="card hidden" id="claimCard">
             <h2>Dabei</h2>
             <div class="players-row" id="claimRow"></div>
+          </div>
+
+          <div class="card hidden" id="orderCard">
+            <h2>Reihenfolge</h2>
+            <ol class="order-list" id="orderList"></ol>
           </div>
 
           <div class="card hidden" id="subCard">
@@ -361,6 +396,82 @@
           <p class="err" id="roErr"></p>
         </div>
 
+        <!-- Wer fliegt? -->
+        <div id="vQRound" class="hidden">
+          <div class="card stage">
+            <div class="qz-top">
+              <span class="q-head" id="qzRound"></span>
+              <div class="timer-box" id="qzTimerBox">
+                <span class="timer" id="qzTimer">0:00</span>
+                <button class="small" id="qzTimerBtn">Start</button>
+                <button class="ghost small" id="qzTimerAdd">+30 s</button>
+              </div>
+              <span class="timer hidden" id="qzCountInfo"></span>
+            </div>
+            <div id="qzAsk">
+              <div class="to-chip" id="qzTo"></div>
+              <div class="q-big" id="qzQ"></div>
+              <div class="solution"><span class="sec-label">Lösung</span><b id="qzA"></b><span class="lvl" id="qzLvl"></span></div>
+              <div class="mark-row">
+                <button class="big good" id="qzRight">Richtig</button>
+                <button class="big bad" id="qzWrong">Falsch</button>
+              </div>
+              <div class="toolbar"><button class="ghost small" id="qzSkip">Andere Frage</button><button class="ghost small" id="qzEnd">Runde beenden</button></div>
+            </div>
+            <div id="qzDone" class="hidden">
+              <div class="q-big" id="qzDoneTitle">Runde vorbei</div>
+              <button class="big" id="qzToVote">Zum Voting</button>
+              <p class="err" id="qzErr"></p>
+            </div>
+          </div>
+          <div class="card"><div class="qp-list" id="qzPlayers"></div></div>
+        </div>
+
+        <div id="vQVote" class="card stage hidden">
+          <div class="q-head" id="qvHead"></div>
+          <div class="q-big">Wer verliert ein Leben?</div>
+          <div class="count-line"><strong id="qvVoted"></strong></div>
+          <div class="progress"><div id="qvBar" style="width:0"></div></div>
+          <div class="vote-grid" id="qvOptions"></div>
+          <div class="spacer"></div>
+          <button class="big" id="qvSolve">Auflösen</button>
+        </div>
+
+        <div id="vQTie" class="card stage hidden">
+          <div class="q-big">Gleichstand</div>
+          <div class="vote-grid" id="qtOptions"></div>
+          <div class="spacer"></div>
+          <div id="qtChart"></div>
+        </div>
+
+        <div id="vQLoss" class="card stage hidden">
+          <div id="qlBanner"></div>
+          <div class="qp-hearts" id="qlHearts"></div>
+          <div id="qlChart"></div>
+          <div class="spacer"></div>
+          <button class="big" id="qlNext"></button>
+        </div>
+
+        <div id="vQFinal" class="card stage hidden">
+          <div class="q-big">Finale</div>
+          <div class="final-duo" id="qfDuo"></div>
+          <div class="spacer"></div>
+          <button class="big" id="qfEval">Auswerten</button>
+        </div>
+
+        <div id="vQReview" class="card stage hidden">
+          <div class="qz-top"><span class="q-head" id="qrvHead"></span><span class="score-big" id="qrvScore"></span></div>
+          <div class="q-big" id="qrvQ" style="font-size:clamp(22px,3.6vw,32px)"></div>
+          <div class="review-grid">
+            <button class="ans-box" id="qrvA"></button>
+            <div class="sol-box"><span class="sec-label">Lösung</span><b id="qrvSol"></b></div>
+            <button class="ans-box" id="qrvB"></button>
+          </div>
+          <div class="toolbar" style="justify-content:center"><button class="ghost small" id="qrvBoth">Beide</button><button class="ghost small" id="qrvNone">Keiner</button></div>
+          <div class="spacer"></div>
+          <div class="row"><button class="big ghost" id="qrvPrev" style="flex:1">Zurück</button><button class="big" id="qrvNext" style="flex:2">Weiter</button></div>
+        </div>
+
         <!-- Ende -->
         <div id="vEnd" class="card hidden">
           <div class="eyebrow">Spiel vorbei</div>
@@ -457,6 +568,7 @@
 <script src="common.js"></script>
 <script src="questions.js"></script>
 <script src="decks.js"></script>
+<script src="quiz.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const lc = (s) => s.toLowerCase();
@@ -473,6 +585,7 @@ let cfg = Object.assign(
   store.get('umfrage-setup', {})
 );
 cfg.settings = Object.assign({ autoReveal: true, autoDraw: true, allowSubmit: true, hostPlays: false }, cfg.settings || {});
+cfg.quiz = Object.assign({ levels: ['leicht', 'mittel', 'schwer', 'unmoeglich', 'fang'], own: '', lives: 3, type: 'time', time: 120, per: 2 }, cfg.quiz || {});
 cfg.decks = Object.assign({ sel: ['fussballer', 'laender', 'essen'], extra: {}, removed: {}, custom: [] }, cfg.decks || {});
 const save = () => store.set('umfrage-setup', cfg);
 
@@ -490,7 +603,7 @@ function show(id) {
   current = id;
   for (const v of ['home', 'setup', 'game', 'settings', 'help']) $(v).classList.toggle('hidden', v !== id);
   const mode = id === 'game' && state ? state.mode : id === 'setup' ? cfg.mode : null;
-  document.body.classList.remove('m-host', 'm-open', 'm-said', 'm-impostor');
+  document.body.classList.remove('m-host', 'm-open', 'm-said', 'm-impostor', 'm-quiz');
   if (mode) document.body.classList.add(`m-${mode}`);
   $('modePill').classList.toggle('hidden', !mode);
   if (mode) $('modePill').textContent = MODES[mode].name;
@@ -579,7 +692,7 @@ $('resetAll').onclick = () => {
 };
 
 // ---------- Einrichtung ----------
-const isQuestionMode = (m) => m !== 'impostor';
+const isQuestionMode = (m) => m !== 'impostor' && m !== 'quiz';
 function renderSetup() {
   const m = cfg.mode;
   $('setupEyebrow').textContent = MODES[m].name;
@@ -587,6 +700,10 @@ function renderSetup() {
   $('deckSummary').classList.toggle('hidden', m !== 'impostor');
   $('optSaid').classList.toggle('hidden', m !== 'said');
   $('optImp').classList.toggle('hidden', m !== 'impostor');
+  $('optQuiz').classList.toggle('hidden', m !== 'quiz');
+  $('quizSummary').classList.toggle('hidden', m !== 'quiz');
+  $('hostPlaysRow').classList.toggle('hidden', m === 'quiz');
+  renderQuizSetup();
   for (const b of $('perRound').children) b.classList.toggle('on', +b.dataset.n === cfg.perRound);
   for (const b of $('impCount').children) b.classList.toggle('on', +b.dataset.n === cfg.impCount);
   $('setupAllowSubmit').checked = !!cfg.settings.allowSubmit;
@@ -612,6 +729,43 @@ $('setupHints').onchange = () => { cfg.hints = $('setupHints').checked; save(); 
 $('setupHostPlays').onchange = () => { cfg.settings.hostPlays = $('setupHostPlays').checked; save(); };
 $('title').value = cfg.title;
 $('title').oninput = () => { cfg.title = $('title').value; save(); };
+
+// ---------- Wer fliegt? (Einrichtung) ----------
+function quizOwn() {
+  return cfg.quiz.own.split('\n').map((l) => l.split('|')).filter((x) => x.length >= 2 && x[0].trim() && x.slice(1).join('|').trim())
+    .map((x) => ({ q: x[0].trim(), a: x.slice(1).join('|').trim(), d: 'eigene' }));
+}
+function quizPool() {
+  return [...QUIZ.filter((x) => cfg.quiz.levels.includes(x.d)), ...quizOwn()];
+}
+function renderQuizSetup() {
+  if (cfg.mode !== 'quiz') return;
+  const z = cfg.quiz;
+  $('levelChips').innerHTML = QUIZ_LEVELS
+    .map((l) => `<button type="button" class="deck${z.levels.includes(l.id) ? ' on' : ''}" data-lvl="${l.id}"><span class="dot" style="background:${l.color}"></span><span class="deck-name">${l.name}</span><span class="deck-n">${QUIZ.filter((x) => x.d === l.id).length}</span></button>`)
+    .join('');
+  $('quizCount').textContent = `${quizPool().length} Fragen`;
+  $('quizOwnCount').textContent = quizOwn().length ? `(${quizOwn().length})` : '';
+  for (const b of $('qLives').children) b.classList.toggle('on', +b.dataset.n === z.lives);
+  for (const b of $('qType').children) b.classList.toggle('on', b.dataset.v === z.type);
+  for (const b of $('qTimePre').children) b.classList.toggle('on', +b.dataset.n === z.time);
+  for (const b of $('qPer').children) b.classList.toggle('on', +b.dataset.n === z.per);
+  if (document.activeElement !== $('qTime')) $('qTime').value = z.time;
+  $('qTimeRow').classList.toggle('hidden', z.type !== 'time');
+  $('qCountRow').classList.toggle('hidden', z.type !== 'count');
+}
+$('levelChips').onclick = (e) => {
+  const b = e.target.closest('[data-lvl]'); if (!b) return;
+  const l = cfg.quiz.levels;
+  cfg.quiz.levels = l.includes(b.dataset.lvl) ? l.filter((x) => x !== b.dataset.lvl) : [...l, b.dataset.lvl];
+  save(); renderQuizSetup();
+};
+$('quizOwn').value = cfg.quiz.own;
+$('quizOwn').oninput = () => { cfg.quiz.own = $('quizOwn').value; save(); renderQuizSetup(); };
+const segN = (id, key) => { $(id).onclick = (e) => { const b = e.target.closest('[data-n]'); if (!b) return; cfg.quiz[key] = +b.dataset.n; save(); renderQuizSetup(); }; };
+segN('qLives', 'lives'); segN('qTimePre', 'time'); segN('qPer', 'per');
+$('qType').onclick = (e) => { const b = e.target.closest('[data-v]'); if (!b) return; cfg.quiz.type = b.dataset.v; save(); renderQuizSetup(); };
+$('qTime').oninput = () => { const v = Math.round(+$('qTime').value); if (v >= 10 && v <= 1800) { cfg.quiz.time = v; save(); renderQuizSetup(); } };
 
 // ---------- Namen ----------
 function renderNames() {
@@ -957,6 +1111,7 @@ let session = store.get('umfrage-host', null); // { code, token, archiveId }
 let state = null;
 let submissions = [];
 let assignments = [];
+let qinfo = null; // Quiz: aktuelle Frage + Statistik pro Spieler (nur Host)
 let qrFor = null;
 
 const joinUrl = (code) => `${location.origin}/play.html?r=${code}`;
@@ -969,9 +1124,12 @@ $('startLobby').onclick = () => {
   if (m === 'impostor' && cfg.names.length < 3) return ($('setupErr').textContent = 'Für Impostor braucht ihr mindestens 3 Namen.');
   if ((m === 'host' || m === 'said') && !qs.length) return ($('setupErr').textContent = 'Bitte mindestens 1 Frage auswählen.');
   if (m === 'impostor' && !wordPool().length) return ($('setupErr').textContent = 'Bitte mindestens ein Wort-Deck auswählen.');
+  if (m === 'quiz' && cfg.names.length < 3) return ($('setupErr').textContent = 'Für „Wer fliegt?“ braucht ihr mindestens 3 Spieler.');
+  if (m === 'quiz' && !quizPool().length) return ($('setupErr').textContent = 'Bitte mindestens eine Fragen-Stufe auswählen.');
   const payload = {
     title: cfg.title, mode: m, options: cfg.names, questions: qs, perRound: cfg.perRound,
     allowSubmit: cfg.settings.allowSubmit, words: m === 'impostor' ? wordPool() : [], impostorCount: cfg.impCount, hints: cfg.hints,
+    quiz: m === 'quiz' ? quizPool() : [], lives: cfg.quiz.lives, roundType: cfg.quiz.type, roundTime: cfg.quiz.time, perPlayer: cfg.quiz.per,
   };
   socket.emit('host:create', payload, (res) => {
     if (res.error) return ($('setupErr').textContent = res.error);
@@ -981,7 +1139,7 @@ $('startLobby').onclick = () => {
       archiveSession(session.archiveId, res.state.title, m);
       for (const q of qs) if (customs().includes(q)) archiveAdd(session.archiveId, q, 'host');
     }
-    playing = !!cfg.settings.hostPlays;
+    playing = !!cfg.settings.hostPlays && m !== 'quiz';
     handleInfo(res.info);
     showGame(res.state);
     show('game');
@@ -1055,7 +1213,7 @@ $('gsWrong').onclick = () => sendGuess(false);
 let playing = false;
 let paneTab = 'host';
 function updatePlayUI() {
-  const inGame = current === 'game' && session && state;
+  const inGame = current === 'game' && session && state && state.mode !== 'quiz';
   $('playToggle').classList.toggle('hidden', !inGame);
   $('playToggle').classList.toggle('on', playing);
   $('playToggleTxt').textContent = playing ? 'Spielt mit' : 'Mitspielen';
@@ -1097,6 +1255,8 @@ function handleInfo(info) {
   lobbyQs = info.questions;
   submissions = info.submissions;
   assignments = info.assignments || [];
+  qinfo = info.quiz || null;
+  if (state?.mode === 'quiz' && state.phase === 'round') renderQuizRound();
   if (session?.archiveId && (state?.mode || cfg.mode) !== 'impostor') {
     archiveSession(session.archiveId, state?.title || cfg.title, state?.mode || cfg.mode);
     for (const s of submissions) archiveAdd(session.archiveId, s.text, 'spieler');
@@ -1163,13 +1323,16 @@ function showGame(s) {
   $('gTitle').classList.toggle('hidden', !showHead);
   $('gEyebrow').classList.toggle('hidden', !showHead);
   $('newGame').classList.toggle('hidden', s.phase !== 'end');
-  const views = ['vLobby', 'vVoting', 'vResults', 'vWriting', 'vGuess', 'vReveal', 'vRoundEnd', 'vRoles', 'vImpVote', 'vKicked', 'vRoundOver', 'vEnd'];
+  const views = ['vLobby', 'vVoting', 'vResults', 'vWriting', 'vGuess', 'vReveal', 'vRoundEnd', 'vRoles', 'vImpVote', 'vKicked', 'vRoundOver', 'vQRound', 'vQVote', 'vQTie', 'vQLoss', 'vQFinal', 'vQReview', 'vEnd'];
   const imp = s.mode === 'impostor';
-  const phaseView = {
+  const qz = s.mode === 'quiz';
+  const phaseView = qz ? {
+    lobby: 'vLobby', round: 'vQRound', vote: 'vQVote', tie: 'vQTie', loss: 'vQLoss', final: 'vQFinal', review: 'vQReview', end: 'vEnd',
+  }[s.phase] : {
     lobby: 'vLobby', voting: imp ? 'vImpVote' : 'vVoting', results: 'vResults', writing: 'vWriting', guess: 'vGuess', reveal: 'vReveal',
     roundEnd: 'vRoundEnd', roles: 'vRoles', kicked: 'vKicked', roundOver: 'vRoundOver', end: 'vEnd',
   }[s.phase];
-  const changed = !prev || prev.phase !== s.phase || prev.voteKey !== s.voteKey || prev.round !== s.round;
+  const changed = !prev || prev.phase !== s.phase || prev.voteKey !== s.voteKey || prev.round !== s.round || (qz && prev.review?.idx !== s.review?.idx);
   for (const v of views) {
     $(v).classList.toggle('hidden', v !== phaseView);
     if (v === phaseView && changed) { $(v).classList.remove('view'); void $(v).offsetWidth; $(v).classList.add('view'); }
@@ -1189,12 +1352,16 @@ function showGame(s) {
       $('lobbyPlayers').textContent = s.players;
       $('lobbyQsLabel').textContent = imp ? 'Wörter' : s.mode === 'said' ? 'Meinungsfragen' : 'Fragen';
       if (imp) $('lobbyQs').textContent = s.words;
+      if (qz) { $('lobbyQs').textContent = s.maxLives; $('lobbyQsLabel').textContent = 'Leben'; }
+      $('lobbyEdit').classList.toggle('hidden', qz);
+      $('orderCard').classList.toggle('hidden', !qz);
+      if (qz) renderOrder();
       $('lobbyEdit').textContent = imp ? 'Decks bearbeiten' : 'Fragen bearbeiten';
       const subs = s.mode === 'open' || (s.mode === 'said' && s.allowSubmit);
       $('subCard').classList.toggle('hidden', !subs);
       $('subTitle').textContent = s.mode === 'said' ? 'Eingereichte Meinungsfragen' : 'Eingereichte Fragen';
-      $('claimCard').classList.toggle('hidden', !(s.mode === 'said' || imp));
-      if (s.mode === 'said' || imp) $('claimRow').innerHTML = playerChips(s);
+      $('claimCard').classList.toggle('hidden', !(s.mode === 'said' || imp || qz));
+      if (s.mode === 'said' || imp || qz) $('claimRow').innerHTML = playerChips(s);
       renderLobbyExtras();
       break;
     }
@@ -1275,11 +1442,168 @@ function showGame(s) {
       $('roHead').textContent = `Runde ${s.round}`;
       if (changed) $('roResult').innerHTML = (s.result ? impResultHTML(s.options, s.result) : '') + scoreboardHTML(s.options, s.scores);
       break;
+    case 'round': renderQuizRound(); break;
+    case 'vote':
+      $('qvHead').textContent = `Runde ${s.round}`;
+      $('qvVoted').textContent = `${s.voted}/${s.voters}`;
+      $('qvBar').style.width = pct(s.voted, s.voters);
+      $('qvOptions').innerHTML = staticOptions(s, s.candidates);
+      if (s.voters > 0 && s.voted >= s.voters && cfg.settings.autoReveal) setTimeout(() => state === s && send('host:reveal'), 1200);
+      break;
+    case 'tie':
+      $('qtOptions').innerHTML = s.tie.map((i) => `<button class="vote-btn" data-i="${i}" style="background:${colorFor(i)}">${esc(s.options[i])}</button>`).join('');
+      if (changed) $('qtChart').innerHTML = s.counts ? resultsHTML(s.options, s.counts) : '';
+      break;
+    case 'loss': {
+      const l = s.loss;
+      if (changed) {
+        $('qlBanner').innerHTML = `<div class="verdict" style="--c:${colorFor(l.name)}"><div class="small">${l.byVote ? 'Abstimmung' : 'Einziger Kandidat'}</div><div class="name">${esc(s.options[l.name])}</div><div class="sub2">${l.out ? 'ist raus' : `−1 ♥ · noch ${l.lives}`}</div></div>`;
+        $('qlChart').innerHTML = s.counts ? resultsHTML(s.options, s.counts) : '';
+      }
+      $('qlHearts').innerHTML = heartsRow(s);
+      $('qlNext').textContent = s.alive.length > 2 ? 'Nächste Runde' : s.alive.length === 2 ? 'Zum Finale' : 'Ergebnis';
+      break;
+    }
+    case 'final':
+      $('qfDuo').innerHTML = s.finalists.map((n, i) => `<div class="duo" style="--c:${colorFor(n)}"><b>${esc(s.options[n])}</b><span>${s.finalProgress[i]}/10</span></div>`).join('<span class="vs">vs</span>');
+      $('qfEval').disabled = false;
+      break;
+    case 'review': renderReview(); break;
     case 'end':
       if (changed) $('endSummary').innerHTML = summaryHTML(s);
       break;
   }
 }
+
+// ---------- Wer fliegt? (Spielleitung) ----------
+let clockOffset = 0;
+function timerLeft(s) {
+  const t = s.timer;
+  return t.running ? Math.max(0, (t.endsAt - (Date.now() + clockOffset)) / 1000) : t.remaining;
+}
+const fmtTime = (sec) => { const t = Math.max(0, Math.ceil(sec)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
+function tick() {
+  if (!state || state.mode !== 'quiz' || state.phase !== 'round' || state.roundType !== 'time') return;
+  const left = timerLeft(state);
+  $('qzTimer').textContent = fmtTime(left);
+  $('qzTimerBox').classList.toggle('low', left <= 10);
+  $('qzTimerBox').classList.toggle('up', state.timeUp);
+}
+setInterval(tick, 250);
+
+function heartsRow(s) {
+  return s.qPlayers
+    .map((n, i) => `<span class="hp${s.lives[i] ? '' : ' out'}"><span class="dot" style="background:${colorFor(n)}"></span>${esc(s.options[n])} <b>${'♥'.repeat(s.lives[i])}<i>${'♥'.repeat(Math.max(0, s.maxLives - s.lives[i]))}</i></b></span>`)
+    .join('');
+}
+function renderQuizRound() {
+  const s = state;
+  clockOffset = s.now - Date.now();
+  $('qzRound').textContent = `Runde ${s.round}`;
+  const timed = s.roundType === 'time';
+  $('qzTimerBox').classList.toggle('hidden', !timed);
+  $('qzCountInfo').classList.toggle('hidden', timed);
+  $('qzCountInfo').textContent = `${s.asked}/${s.askTotal}`;
+  $('qzTimerBtn').textContent = s.timer.running ? 'Pause' : 'Start';
+  $('qzTimerBtn').disabled = s.timeUp;
+  const cur = qinfo?.current;
+  $('qzAsk').classList.toggle('hidden', !cur);
+  $('qzDone').classList.toggle('hidden', !!cur);
+  $('qzDoneTitle').textContent = s.timeUp ? 'Zeit abgelaufen' : 'Runde vorbei';
+  if (cur) {
+    $('qzTo').innerHTML = `<span style="background:${colorFor(cur.to)}">${esc(s.options[cur.to])}</span>`;
+    $('qzQ').textContent = cur.q;
+    $('qzA').textContent = cur.a;
+    const lvl = QUIZ_LEVELS.find((l) => l.id === cur.d);
+    $('qzLvl').textContent = lvl ? lvl.name : 'Eigene';
+    $('qzLvl').style.background = lvl ? lvl.color : '#535C68';
+  }
+  tick();
+  renderQuizPlayers();
+}
+function renderQuizPlayers() {
+  if (!state || state.mode !== 'quiz' || !qinfo) return;
+  if (state.phase === 'round') {
+    const cur = qinfo.current;
+    $('qzPlayers').innerHTML = qinfo.stats
+      .map((p) => {
+        const i = state.qPlayers.indexOf(p.name);
+        const lives = state.lives[i] || 0;
+        return `<div class="qp${p.alive ? '' : ' out'}${cur && cur.to === p.name ? ' turn' : ''}">
+          <div class="qp-head"><span class="dot" style="background:${colorFor(p.name)}"></span><b>${esc(state.options[p.name])}</b>
+            <span class="hearts">${'♥'.repeat(lives)}<i>${'♥'.repeat(Math.max(0, state.maxLives - lives))}</i></span>
+            <span class="qp-score"><span class="ok">✓ ${p.right}</span> <span class="no">✗ ${p.wrong.length}</span></span>
+            ${p.alive ? `<label class="switch small-switch" title="Zum Voting frei"><input type="checkbox" data-avail="${p.name}" ${p.avail ? 'checked' : ''} /><span></span></label>` : ''}</div>
+          ${p.wrong.length ? `<ul class="wrong-list">${p.wrong.map((w) => `<li>${esc(w.q)} <b>→ ${esc(w.a)}</b></li>`).join('')}</ul>` : ''}
+        </div>`;
+      })
+      .join('');
+  }
+}
+$('qzPlayers').onchange = (e) => {
+  const c = e.target.closest('[data-avail]'); if (!c) return;
+  send('host:avail', { name: +c.dataset.avail, on: c.checked });
+};
+$('qzRight').onclick = () => send('host:mark', { correct: true });
+$('qzWrong').onclick = () => send('host:mark', { correct: false });
+$('qzSkip').onclick = () => send('host:skipq');
+$('qzEnd').onclick = () => { if (confirm('Runde jetzt beenden?')) send('host:quizEndRound'); };
+$('qzTimerBtn').onclick = () => send('host:timer', { action: state.timer.running ? 'pause' : 'start' });
+$('qzTimerAdd').onclick = () => send('host:timer', { action: 'add', seconds: 30 });
+$('qzToVote').onclick = () => { $('qzErr').textContent = ''; next('qzErr'); };
+$('qvSolve').onclick = () => send('host:reveal');
+$('qtOptions').onclick = (e) => { const b = e.target.closest('[data-i]'); if (b && confirm(`${state.options[+b.dataset.i]} verliert ein Leben?`)) send('host:pickLoser', { name: +b.dataset.i }); };
+$('qlNext').onclick = () => next();
+$('qfEval').onclick = () => {
+  const done = state.finalProgress.every((n) => n >= 10);
+  if (!done && !confirm('Noch nicht beide fertig. Trotzdem auswerten?')) return;
+  next();
+};
+
+// Reihenfolge in der Lobby (im Uhrzeigersinn)
+function renderOrder() {
+  const s = state;
+  $('orderList').innerHTML = s.order
+    .map((n, k) => `<li class="${s.claimed.includes(n) ? '' : 'off'}"><span class="dot" style="background:${colorFor(n)}"></span><span class="q-text">${esc(s.options[n])}</span>
+      <button class="ghost small icon-btn" data-oup="${k}" ${k === 0 ? 'disabled' : ''}>↑</button><button class="ghost small icon-btn" data-odn="${k}" ${k === s.order.length - 1 ? 'disabled' : ''}>↓</button></li>`)
+    .join('');
+}
+$('orderList').onclick = (e) => {
+  const up = e.target.closest('[data-oup]'), dn = e.target.closest('[data-odn]');
+  const o = state.order.slice();
+  const k = up ? +up.dataset.oup : dn ? +dn.dataset.odn : -1; if (k < 0) return;
+  const j = up ? k - 1 : k + 1;
+  [o[k], o[j]] = [o[j], o[k]];
+  send('host:order', { order: o });
+};
+
+// Finale auswerten
+function renderReview() {
+  const s = state, r = s.review, [a, b] = s.finalists;
+  $('qrvHead').textContent = `${r.idx + 1}/10`;
+  $('qrvScore').textContent = `${s.finalScore[0]} : ${s.finalScore[1]}`;
+  $('qrvQ').textContent = r.q;
+  $('qrvSol').textContent = r.a;
+  const got = (i) => r.point === i || r.point === 'both';
+  $('qrvA').innerHTML = `<span class="who" style="background:${colorFor(a)}">${esc(s.options[a])}</span><span class="ans">${esc(r.answers[0])}</span>`;
+  $('qrvB').innerHTML = `<span class="who" style="background:${colorFor(b)}">${esc(s.options[b])}</span><span class="ans">${esc(r.answers[1])}</span>`;
+  $('qrvA').classList.toggle('won', got(0));
+  $('qrvB').classList.toggle('won', got(1));
+  $('qrvPrev').disabled = r.idx === 0;
+  $('qrvNext').textContent = r.idx < 9 ? 'Weiter' : 'Ergebnis';
+}
+function toggleAward(i) {
+  const p = state.review.point;
+  const has = [p === 0 || p === 'both', p === 1 || p === 'both'];
+  has[i] = !has[i];
+  send('host:award', { who: has[0] && has[1] ? 'both' : has[0] ? 0 : has[1] ? 1 : 'none' });
+}
+$('qrvA').onclick = () => toggleAward(0);
+$('qrvB').onclick = () => toggleAward(1);
+$('qrvBoth').onclick = () => send('host:award', { who: 'both' });
+$('qrvNone').onclick = () => send('host:award', { who: 'none' });
+$('qrvPrev').onclick = () => send('host:reviewGo', { idx: state.review.idx - 1 });
+$('qrvNext').onclick = () => next();
 </script>
 </body>
 </html>
