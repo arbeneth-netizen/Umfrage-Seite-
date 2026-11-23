@@ -33,6 +33,16 @@
       <p><b id="lobbyPlayers"></b></p>
     </div>
 
+    <form id="subForm" class="card hidden">
+      <h2>✍️ Deine Fragen einreichen</h2>
+      <p class="muted" style="margin-top:0">Anonym – niemand sieht, von wem die Frage kommt. Mehrere Fragen? Einfach jede in eine neue Zeile.</p>
+      <textarea id="subInput" maxlength="2000" placeholder="Wer würde am ehesten …?"></textarea>
+      <div class="spacer"></div>
+      <button class="big" type="submit">Einreichen</button>
+      <p class="err" id="subErr"></p>
+      <ul class="mine" id="mine"></ul>
+    </form>
+
     <div id="vVoting" class="hidden">
       <div class="q-head" id="vqHead"></div>
       <div class="q-big" id="vqText"></div>
@@ -116,12 +126,14 @@ function render(s) {
   $('vGame').classList.remove('hidden');
   $('gTitle').textContent = s.title;
   $('gSub').textContent = `Spielcode ${s.code}`;
-  for (const v of ['vLobby', 'vVoting', 'vResults', 'vEnd']) $(v).classList.add('hidden');
+  for (const v of ['vLobby', 'vVoting', 'vResults', 'vEnd', 'subForm']) $(v).classList.add('hidden');
   const head = `Frage ${s.index + 1} von ${s.totalQuestions}`;
 
   if (s.phase === 'lobby') {
     $('vLobby').classList.remove('hidden');
-    $('lobbyPlayers').textContent = `${s.players} ${s.players === 1 ? 'Spieler' : 'Spieler'} in der Lobby`;
+    $('lobbyPlayers').textContent = `${s.players} Spieler in der Lobby` + (s.mode === 'open' ? ` · ${s.submissions} Fragen eingereicht` : '');
+    $('subForm').classList.toggle('hidden', s.mode !== 'open');
+    renderMine();
   } else if (s.phase === 'voting') {
     $('vVoting').classList.remove('hidden');
     $('vqHead').textContent = head;
@@ -147,6 +159,26 @@ function render(s) {
       .join('');
   }
 }
+
+// Eigene Fragen einreichen
+let mine = [];
+function renderMine() {
+  $('mine').innerHTML = mine.length
+    ? `<li class="muted" style="background:none;padding:0">Von dir eingereicht (${mine.length}):</li>` + mine.map((t) => `<li>✅ ${esc(t)}</li>`).join('')
+    : '';
+}
+$('subForm').onsubmit = (e) => {
+  e.preventDefault();
+  const text = $('subInput').value.trim();
+  $('subErr').textContent = '';
+  if (!text) return;
+  socket.emit('player:submit', { text }, (res) => {
+    if (res.error) return ($('subErr').textContent = res.error);
+    mine.push(...res.added);
+    $('subInput').value = '';
+    renderMine();
+  });
+};
 
 $('vqOptions').onclick = (e) => {
   const b = e.target.closest('button[data-i]');

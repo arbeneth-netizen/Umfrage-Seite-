@@ -20,7 +20,17 @@
     </div>
 
     <div class="card">
-      <h2>2. Antwortmöglichkeiten (Namen) <small id="nameCount"></small></h2>
+      <h2>2. Spielmodus</h2>
+      <div class="modes">
+        <label class="mode"><input type="radio" name="mode" value="host" />
+          <span><b>🎤 Ich stelle die Fragen</b><br><span class="muted">Du wählst vorher alle Fragen aus.</span></span></label>
+        <label class="mode"><input type="radio" name="mode" value="open" />
+          <span><b>✍️ Alle reichen Fragen ein</b><br><span class="muted">Jeder tippt in der Lobby eigene Fragen ein (anonym). Du nimmst davon so viele ins Spiel, wie du willst – plus beliebig viele Vorschläge.</span></span></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3. Antwortmöglichkeiten (Namen) <small id="nameCount"></small></h2>
       <form id="nameForm" class="row">
         <input type="text" id="nameInput" maxlength="40" placeholder="Name eingeben und Enter drücken" autocomplete="off" />
         <button type="submit">Hinzufügen</button>
@@ -32,29 +42,34 @@
       <div id="chips" class="chips"></div>
     </div>
 
-    <div class="card">
-      <h2>3. Fragen <small id="qCount"></small></h2>
-      <form id="qForm" class="row">
-        <input type="text" id="qInput" maxlength="200" placeholder="Eigene Frage eintragen, z. B. Wer würde am ehesten …?" autocomplete="off" />
-        <button type="submit">Hinzufügen</button>
-      </form>
+    <div id="setupPickerSlot">
+      <!-- Fragen-Auswahl (wird im Modus "Alle reichen Fragen ein" in die Lobby verschoben) -->
+      <div class="card" id="qCard">
+        <h2><span id="qStep">4. </span>Fragen <small id="qCount"></small></h2>
+        <p class="muted hidden" id="openHint" style="margin-top:0">Optional: Du kannst schon Fragen vorauswählen. In der Lobby kommen die Fragen der Spieler dazu, und du kannst weiter auswählen.</p>
+        <form id="qForm" class="row">
+          <input type="text" id="qInput" maxlength="200" placeholder="Eigene Frage eintippen, z. B. Wer würde am ehesten …?" autocomplete="off" />
+          <button type="submit">Hinzufügen</button>
+        </form>
+        <div class="toolbar">
+          <button type="button" class="small" id="openArchive">📚 Archiv</button>
+          <button type="button" class="ghost small" id="random10">🎲 10 zufällige</button>
+          <button type="button" class="ghost small" id="shuffleSel">Reihenfolge mischen</button>
+          <button type="button" class="ghost small" id="clearSel">Auswahl leeren</button>
+        </div>
 
-      <div class="spacer"></div>
-      <h2 style="font-size:16px">Ausgewählt für dieses Spiel</h2>
-      <p class="muted" id="noSelected" style="margin:0">Noch keine Frage ausgewählt – hake unten Vorschläge an oder trag eigene ein.</p>
-      <ul id="selectedList" class="q-list selected-list"></ul>
-      <div class="toolbar">
-        <button type="button" class="ghost small" id="shuffleSel">Reihenfolge mischen</button>
-        <button type="button" class="ghost small" id="clearSel">Auswahl leeren</button>
-      </div>
+        <div class="spacer"></div>
+        <h3 class="mini">Im Spiel <span id="selCount"></span></h3>
+        <p class="muted" id="noSelected" style="margin:0">Noch keine Frage ausgewählt – tippe unten auf Vorschläge, hol dir welche aus dem Archiv oder tipp eigene ein.</p>
+        <ul id="selectedList" class="q-list selected-list"></ul>
 
-      <div class="spacer"></div>
-      <h2 style="font-size:16px">Vorschläge &amp; deine Fragen</h2>
-      <div class="toolbar">
-        <button type="button" class="ghost small" id="random10">🎲 10 zufällige auswählen</button>
-        <button type="button" class="ghost small" id="selectAll">Alle auswählen</button>
+        <div class="spacer"></div>
+        <h3 class="mini">Vorschläge</h3>
+        <input type="text" id="qSearch" placeholder="🔍 Fragen durchsuchen …" autocomplete="off" />
+        <div class="cat-chips" id="catChips"></div>
+        <div class="toolbar" id="catTools"></div>
+        <ul id="suggestList" class="q-list"></ul>
       </div>
-      <ul id="suggestList" class="q-list"></ul>
     </div>
 
     <button class="big" id="startLobby">Lobby starten</button>
@@ -67,21 +82,35 @@
     <p class="sub" id="gSub"></p>
 
     <!-- Lobby -->
-    <div id="vLobby" class="card hidden">
-      <div class="lobby">
-        <div class="qr"><img id="qrImg" alt="QR-Code zum Beitreten" /></div>
-        <div>
-          <div class="q-head">QR-Code scannen zum Mitmachen</div>
-          <div class="muted" style="margin-top:8px">oder Code eingeben:</div>
-          <div class="code" id="lobbyCode"></div>
-          <div class="link" id="lobbyLink"></div>
-          <div class="spacer"></div>
-          <div class="big-num" id="lobbyPlayers">0</div>
-          <div class="muted">Spieler beigetreten</div>
-          <div class="spacer"></div>
-          <button class="big" id="startGame">Spiel starten ▶</button>
+    <div id="vLobby" class="hidden">
+      <div class="card">
+        <div class="lobby">
+          <div class="qr"><img id="qrImg" alt="QR-Code zum Beitreten" /></div>
+          <div>
+            <div class="q-head">QR-Code scannen zum Mitmachen</div>
+            <div class="muted" style="margin-top:8px">oder Code eingeben:</div>
+            <div class="code" id="lobbyCode"></div>
+            <div class="link" id="lobbyLink"></div>
+            <div class="spacer"></div>
+            <div class="row" style="gap:28px">
+              <div><div class="big-num" id="lobbyPlayers">0</div><div class="muted">Spieler</div></div>
+              <div><div class="big-num" id="lobbyQs">0</div><div class="muted">Fragen im Spiel</div></div>
+            </div>
+            <div class="spacer"></div>
+            <button class="big" id="startGame">Spiel starten ▶</button>
+            <p class="err" id="lobbyErr"></p>
+          </div>
         </div>
       </div>
+
+      <div class="card hidden" id="subCard">
+        <h2>✍️ Eingereichte Fragen <small id="subCount"></small></h2>
+        <p class="muted" id="noSubs" style="margin:0">Noch nichts eingereicht – die Spieler können in der Lobby auf ihrem Handy Fragen eintippen.</p>
+        <div class="toolbar"><button class="ghost small hidden" id="takeAllSubs">Alle übernehmen</button></div>
+        <ul class="q-list" id="subList"></ul>
+      </div>
+
+      <div id="lobbyPickerSlot"></div>
     </div>
 
     <!-- Abstimmung -->
@@ -120,60 +149,23 @@
   </section>
 </div>
 
+<!-- ============ ARCHIV ============ -->
+<div class="overlay hidden" id="archive">
+  <div class="sheet">
+    <div class="sheet-head">
+      <button class="ghost small hidden" id="arBack">← Sessions</button>
+      <h2 id="arTitle" style="margin:0;flex:1">📚 Archiv</h2>
+      <button class="ghost small" id="arClose">✕</button>
+    </div>
+    <div id="arBody"></div>
+  </div>
+</div>
+
 <script src="/socket.io/socket.io.js"></script>
 <script src="common.js"></script>
+<script src="questions.js"></script>
 <script>
-// ---------- Vorgeschlagene Fragen ----------
-const SUGGESTIONS = [
-  'Wer würde am ehesten den Trainer schlagen?',
-  'Wer landet am ehesten im Knast?',
-  'Wer wird als Erster Vater?',
-  'Wer heiratet als Erster?',
-  'Wer wird am ehesten Millionär?',
-  'Wer ist am ehesten pleite, obwohl gerade Monatsanfang ist?',
-  'Wer verschläft am ehesten das Training?',
-  'Wer kassiert am ehesten eine Rote Karte?',
-  'Wer würde am ehesten den Schiri bestechen?',
-  'Wer ist der Faulste im Training?',
-  'Wer wird später am ehesten selbst Trainer?',
-  'Wer hat den schlechtesten Musikgeschmack?',
-  'Wer stirbt in der Zombie-Apokalypse als Erster?',
-  'Wer überlebt am längsten allein auf einer einsamen Insel?',
-  'Wer schreibt um 3 Uhr nachts am ehesten seiner Ex?',
-  'Wer gibt am meisten an?',
-  'Wer hat das größte Ego?',
-  'Wer hat die meisten Matches auf Tinder?',
-  'Wer flirtet am ehesten mit der Kellnerin?',
-  'Wer braucht am längsten im Bad?',
-  'Wer hat die meisten Gym-Selfies auf dem Handy?',
-  'Wer würde für 50 € eine ganze Zitrone essen?',
-  'Wer rennt für eine Wette nackt durchs Dorf?',
-  'Wer wird am ehesten Influencer?',
-  'Wer würde am ehesten bei Love Island mitmachen?',
-  'Wer ist der schlechteste Autofahrer?',
-  'Wer erzählt die besten Geschichten – die zur Hälfte gelogen sind?',
-  'Wer kotzt auf der Party als Erster?',
-  'Wer macht beim Feiern als Erster schlapp?',
-  'Wer verliert beim Feiern am ehesten sein Handy?',
-  'Wer endet nach der Party am ehesten bei einem Döner um 5 Uhr?',
-  'Wer zahlt geliehenes Geld nie zurück?',
-  'Wer ist das größte Muttersöhnchen?',
-  'Wer redet am meisten Müll?',
-  'Wer haut am ehesten bei einer Schlägerei ab?',
-  'Wer würde sich als Erster den Namen seiner Freundin tätowieren lassen?',
-  'Wer schläft auf der Auswärtsfahrt immer als Erster ein?',
-  'Wer würde bei „Wer wird Millionär“ bei der 50-€-Frage rausfliegen?',
-  'Wer geht im Urlaub am ehesten verloren?',
-  'Wer ist heimlich der größte Gamer-Nerd?',
-  'Wer hat die schlimmste Frisur?',
-  'Wer wird am ehesten Bürgermeister?',
-  'Wer würde am ehesten bei einem Überfall mitmachen?',
-  'Wer hat den peinlichsten Insta-Account?',
-  'Wer würde am ehesten seinen besten Kumpel für 1.000 € verraten?',
-  'Wer fällt am ehesten auf einen Fake-Gewinn herein?',
-  'Wer bringt seine Freundin am ehesten mit zur Mannschaftsfahrt?',
-  'Wer hat am ehesten noch Schulden bei der Mannschaftskasse?',
-];
+const $ = (id) => document.getElementById(id);
 
 // ---------- Lokaler Speicher ----------
 const store = {
@@ -181,12 +173,26 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
   del(k) { try { localStorage.removeItem(k); } catch {} },
 };
-let cfg = Object.assign({ title: '', names: [], custom: [], selected: [] }, store.get('umfrage-setup', {}));
+let cfg = Object.assign({ title: '', mode: 'host', names: [], custom: [], selected: [] }, store.get('umfrage-setup', {}));
 const save = () => store.set('umfrage-setup', cfg);
 
-const $ = (id) => document.getElementById(id);
+// ---------- Archiv: jede eingetippte Frage, nach Session ----------
+// [{ id, title, date, questions: [{ t, src: 'host' | 'spieler' }] }]
+let archive = store.get('umfrage-archiv', []);
+const saveArchive = () => store.set('umfrage-archiv', archive);
+function archiveSession(id, title) {
+  let s = archive.find((x) => x.id === id);
+  if (!s) { s = { id, title: title || 'Ohne Titel', date: Date.now(), questions: [] }; archive.unshift(s); saveArchive(); }
+  return s;
+}
+function archiveAdd(id, text, src) {
+  const s = archive.find((x) => x.id === id);
+  if (!s || s.questions.some((q) => q.t.toLowerCase() === text.toLowerCase())) return;
+  s.questions.push({ t: text, src });
+  saveArchive();
+}
 
-// ---------- Setup-Ansicht ----------
+// ---------- Namen ----------
 function renderNames() {
   $('chips').innerHTML = cfg.names
     .map((n, i) => `<span class="chip" style="background:${colorFor(i)}">${esc(n)}<button data-i="${i}" title="Entfernen">✕</button></span>`)
@@ -211,104 +217,269 @@ $('pasteNames').onclick = () => {
 };
 $('clearNames').onclick = () => { if (cfg.names.length && confirm('Alle Namen löschen?')) { cfg.names = []; save(); renderNames(); } };
 
-const allQuestions = () => [...cfg.custom, ...SUGGESTIONS.filter((s) => !cfg.custom.includes(s))];
+// ---------- Modus ----------
+function renderMode() {
+  for (const r of document.querySelectorAll('input[name=mode]')) r.checked = r.value === cfg.mode;
+  $('openHint').classList.toggle('hidden', cfg.mode !== 'open');
+}
+for (const r of document.querySelectorAll('input[name=mode]')) r.onchange = () => { cfg.mode = r.value; save(); renderMode(); };
 
-function renderQuestions() {
-  cfg.selected = cfg.selected.filter((q) => allQuestions().includes(q));
-  $('selectedList').innerHTML = cfg.selected
+// ---------- Fragen-Auswahl (Setup + Lobby) ----------
+let pickTarget = 'setup'; // 'setup' -> cfg.selected | 'lobby' -> Fragen des laufenden Spiels
+let lobbyQs = [];
+let activeCat = CATEGORIES[0].id;
+const lc = (s) => s.toLowerCase();
+
+const pickList = () => (pickTarget === 'lobby' ? lobbyQs : cfg.selected);
+function setPickList(list) {
+  if (pickTarget === 'lobby') {
+    lobbyQs = list;
+    if (session) socket.emit('host:questions', { ...session, questions: list });
+    renderLobbyExtras();
+  } else {
+    cfg.selected = list;
+    save();
+  }
+  renderPicker();
+}
+const isPicked = (q) => pickList().some((x) => lc(x) === lc(q));
+function togglePick(q) {
+  setPickList(isPicked(q) ? pickList().filter((x) => lc(x) !== lc(q)) : [...pickList(), q]);
+}
+function addPicks(qs) {
+  const list = pickList().slice();
+  for (const q of qs) if (!list.some((x) => lc(x) === lc(q))) list.push(q);
+  setPickList(list);
+}
+
+function renderPicker() {
+  const list = pickList();
+  $('selectedList').innerHTML = list
     .map((q, i) => `<li class="q-item on"><span class="q-text">${esc(q)}</span>
       <button class="ghost small" data-up="${i}" ${i === 0 ? 'disabled' : ''} title="Nach oben">↑</button>
-      <button class="ghost small" data-rm="${i}" title="Abwählen">✕</button></li>`)
+      <button class="ghost small" data-rm="${i}" title="Rausnehmen">✕</button></li>`)
     .join('');
-  $('noSelected').classList.toggle('hidden', cfg.selected.length > 0);
-  $('qCount').textContent = cfg.selected.length ? `(${cfg.selected.length} ausgewählt)` : '';
-  $('suggestList').innerHTML = allQuestions()
+  $('noSelected').classList.toggle('hidden', list.length > 0);
+  $('qCount').textContent = list.length ? `(${list.length} im Spiel)` : '';
+  $('selCount').textContent = list.length ? `(${list.length})` : '';
+
+  // Kategorie-Chips
+  const cats = [...(cfg.custom.length ? [{ id: 'own', name: 'Eigene', emoji: '✏️', questions: cfg.custom }] : []), ...CATEGORIES];
+  if (!cats.some((c) => c.id === activeCat)) activeCat = CATEGORIES[0].id;
+  const search = lc($('qSearch').value.trim());
+  $('catChips').innerHTML = cats
+    .map((c) => {
+      const n = c.questions.filter(isPicked).length;
+      return `<button type="button" class="cat${!search && c.id === activeCat ? ' on' : ''}" data-cat="${c.id}">${c.emoji} ${esc(c.name)}${n ? ` <span class="badge">${n}</span>` : ''}</button>`;
+    })
+    .join('');
+
+  let shown, cat = null;
+  if (search) {
+    shown = [...new Set([...cfg.custom, ...SUGGESTIONS])].filter((q) => lc(q).includes(search));
+  } else {
+    cat = cats.find((c) => c.id === activeCat);
+    shown = cat.questions;
+  }
+  $('catTools').innerHTML = cat
+    ? `<button type="button" class="ghost small" id="catAll">Alle aus „${esc(cat.name)}“ übernehmen</button>`
+    : `<span class="muted">${shown.length} Treffer</span>`;
+  $('suggestList').innerHTML = shown
     .map((q) => {
-      const on = cfg.selected.includes(q);
-      const own = cfg.custom.includes(q);
+      const on = isPicked(q), own = cfg.custom.includes(q);
       return `<li class="q-item${on ? ' on' : ''}" data-q="${esc(q)}">
         <input type="checkbox" ${on ? 'checked' : ''} tabindex="-1" />
         <span class="q-text">${esc(q)}</span>
-        ${own ? '<span class="tag">eigene</span><button class="ghost small del" title="Frage löschen">🗑</button>' : ''}
+        ${own ? '<button class="ghost small del" title="Eigene Frage löschen">🗑</button>' : ''}
       </li>`;
     })
-    .join('');
+    .join('') || '<li class="muted">Keine Fragen gefunden.</li>';
 }
+
+$('catChips').onclick = (e) => {
+  const b = e.target.closest('[data-cat]'); if (!b) return;
+  activeCat = b.dataset.cat; $('qSearch').value = ''; renderPicker();
+};
+$('catTools').onclick = (e) => {
+  if (!e.target.closest('#catAll')) return;
+  const cats = [{ id: 'own', questions: cfg.custom }, ...CATEGORIES];
+  addPicks(cats.find((c) => c.id === activeCat).questions);
+};
+$('qSearch').oninput = renderPicker;
 $('suggestList').onclick = (e) => {
   const li = e.target.closest('li[data-q]'); if (!li) return;
   const q = li.dataset.q;
   if (e.target.closest('.del')) {
-    cfg.custom = cfg.custom.filter((x) => x !== q);
-  } else if (cfg.selected.includes(q)) {
-    cfg.selected = cfg.selected.filter((x) => x !== q);
-  } else {
-    cfg.selected.push(q);
-  }
-  save(); renderQuestions();
+    cfg.custom = cfg.custom.filter((x) => x !== q); save(); renderPicker();
+  } else togglePick(q);
 };
 $('selectedList').onclick = (e) => {
   const up = e.target.closest('[data-up]'), rm = e.target.closest('[data-rm]');
-  if (up) { const i = +up.dataset.up; [cfg.selected[i - 1], cfg.selected[i]] = [cfg.selected[i], cfg.selected[i - 1]]; }
-  else if (rm) cfg.selected.splice(+rm.dataset.rm, 1);
+  const list = pickList().slice();
+  if (up) { const i = +up.dataset.up; [list[i - 1], list[i]] = [list[i], list[i - 1]]; }
+  else if (rm) list.splice(+rm.dataset.rm, 1);
   else return;
-  save(); renderQuestions();
+  setPickList(list);
 };
 $('qForm').onsubmit = (e) => {
   e.preventDefault();
   const q = $('qInput').value.trim().slice(0, 200);
   if (!q) return;
-  if (!cfg.custom.includes(q) && !SUGGESTIONS.includes(q)) cfg.custom.unshift(q);
-  if (!cfg.selected.includes(q)) cfg.selected.push(q);
-  $('qInput').value = ''; save(); renderQuestions();
+  if (!cfg.custom.some((x) => lc(x) === lc(q)) && !SUGGESTIONS.some((x) => lc(x) === lc(q))) cfg.custom.unshift(q);
+  save();
+  if (pickTarget === 'lobby' && session?.archiveId) archiveAdd(session.archiveId, q, 'host');
+  $('qInput').value = '';
+  addPicks([q]);
 };
 const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-$('random10').onclick = () => { cfg.selected = shuffle(allQuestions().slice()).slice(0, 10); save(); renderQuestions(); };
-$('selectAll').onclick = () => { for (const q of allQuestions()) if (!cfg.selected.includes(q)) cfg.selected.push(q); save(); renderQuestions(); };
-$('shuffleSel').onclick = () => { shuffle(cfg.selected); save(); renderQuestions(); };
-$('clearSel').onclick = () => { cfg.selected = []; save(); renderQuestions(); };
+$('random10').onclick = () => addPicks(shuffle(SUGGESTIONS.filter((q) => !isPicked(q))).slice(0, 10));
+$('shuffleSel').onclick = () => setPickList(shuffle(pickList().slice()));
+$('clearSel').onclick = () => { if (!pickList().length || confirm('Alle ausgewählten Fragen rausnehmen?')) setPickList([]); };
+
+// ---------- Archiv-Ansicht ----------
+let arView = null; // null = Session-Liste, sonst Session-ID
+const fmtDate = (t) => new Date(t).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+function renderArchive() {
+  const s = arView && archive.find((x) => x.id === arView);
+  $('arBack').classList.toggle('hidden', !s);
+  if (!s) {
+    arView = null;
+    $('arTitle').textContent = '📚 Archiv';
+    const list = archive.filter((x) => x.questions.length);
+    $('arBody').innerHTML = list.length
+      ? `<p class="muted" style="margin-top:0">Wähle eine Session aus, um Fragen daraus zu übernehmen.</p><ul class="q-list">${list
+          .map((x) => `<li class="q-item session" data-s="${esc(x.id)}"><span class="q-text"><b>${esc(x.title)}</b><br><span class="muted">${fmtDate(x.date)} · ${x.questions.length} ${x.questions.length === 1 ? 'Frage' : 'Fragen'}</span></span><span class="chev">›</span></li>`)
+          .join('')}</ul>`
+      : '<p class="muted">Noch leer. Jede Frage, die du oder die Spieler eintippen, landet hier automatisch – sortiert nach Session.</p>';
+    return;
+  }
+  $('arTitle').textContent = s.title;
+  const all = s.questions.every((q) => isPicked(q.t));
+  $('arBody').innerHTML = `<p class="muted" style="margin-top:0">${fmtDate(s.date)} · Tippe auf eine Frage, um sie ins Spiel zu nehmen.</p>
+    <div class="toolbar" style="margin-bottom:10px">
+      <button class="small" id="arAll" ${all ? 'disabled' : ''}>Alle übernehmen</button>
+      <button class="ghost small" id="arDel">Session löschen</button>
+    </div>
+    <ul class="q-list">${s.questions
+      .map((q, i) => `<li class="q-item${isPicked(q.t) ? ' on' : ''}" data-i="${i}"><input type="checkbox" ${isPicked(q.t) ? 'checked' : ''} tabindex="-1" />
+        <span class="q-text">${esc(q.t)}</span><span class="tag">${q.src === 'spieler' ? 'Spieler' : 'Host'}</span></li>`)
+      .join('')}</ul>`;
+}
+$('openArchive').onclick = () => { arView = null; renderArchive(); $('archive').classList.remove('hidden'); };
+$('arClose').onclick = () => $('archive').classList.add('hidden');
+$('archive').onclick = (e) => { if (e.target === $('archive')) $('archive').classList.add('hidden'); };
+$('arBack').onclick = () => { arView = null; renderArchive(); };
+$('arBody').onclick = (e) => {
+  const sess = e.target.closest('[data-s]');
+  if (sess) { arView = sess.dataset.s; return renderArchive(); }
+  const s = archive.find((x) => x.id === arView); if (!s) return;
+  if (e.target.closest('#arAll')) addPicks(s.questions.map((q) => q.t));
+  else if (e.target.closest('#arDel')) {
+    if (!confirm(`Session „${s.title}“ aus dem Archiv löschen?`)) return;
+    archive = archive.filter((x) => x !== s); saveArchive(); arView = null;
+  } else {
+    const li = e.target.closest('[data-i]'); if (!li) return;
+    togglePick(s.questions[+li.dataset.i].t);
+  }
+  renderArchive();
+};
 
 $('title').value = cfg.title;
 $('title').oninput = () => { cfg.title = $('title').value; save(); };
-renderNames(); renderQuestions();
+renderNames(); renderMode(); renderPicker();
 
 // ---------- Spiel ----------
 const socket = io();
-let session = store.get('umfrage-host', null); // { code, token }
+let session = store.get('umfrage-host', null); // { code, token, archiveId }
 let state = null;
+let submissions = [];
 
 const joinUrl = (code) => `${location.origin}/play.html?r=${code}`;
 
 $('startLobby').onclick = () => {
   $('setupErr').textContent = '';
   if (cfg.names.length < 2) return ($('setupErr').textContent = 'Bitte mindestens 2 Namen eintragen.');
-  if (!cfg.selected.length) return ($('setupErr').textContent = 'Bitte mindestens 1 Frage auswählen.');
-  socket.emit('host:create', { title: cfg.title, options: cfg.names, questions: cfg.selected }, (res) => {
+  if (cfg.mode === 'host' && !cfg.selected.length) return ($('setupErr').textContent = 'Bitte mindestens 1 Frage auswählen.');
+  const payload = { title: cfg.title, mode: cfg.mode, options: cfg.names, questions: cfg.selected };
+  socket.emit('host:create', payload, (res) => {
     if (res.error) return ($('setupErr').textContent = res.error);
-    session = { code: res.code, token: res.token };
+    session = { code: res.code, token: res.token, archiveId: `${res.code}-${Date.now()}` };
     store.set('umfrage-host', session);
+    // Archiv: selbst eingetippte Fragen dieser Session speichern
+    archiveSession(session.archiveId, res.state.title);
+    for (const q of cfg.selected) if (cfg.custom.includes(q)) archiveAdd(session.archiveId, q, 'host');
+    handleInfo(res.info);
     showGame(res.state);
   });
 };
 
-const send = (ev) => session && socket.emit(ev, session);
-$('startGame').onclick = () => send('host:next');
+const send = (ev, cb) => session && socket.emit(ev, session, cb);
+$('startGame').onclick = () => {
+  $('lobbyErr').textContent = '';
+  send('host:next', (res) => { if (res?.error) $('lobbyErr').textContent = res.error; });
+};
 $('next').onclick = () => send('host:next');
 $('reveal').onclick = () => send('host:reveal');
 $('endGame').onclick = () => { if (confirm('Spiel jetzt beenden und Gesamtergebnis zeigen?')) send('host:end'); };
 $('newGame').onclick = () => {
   if (state && state.phase !== 'end' && !confirm('Laufendes Spiel verlassen?')) return;
-  store.del('umfrage-host'); session = null; state = null;
+  store.del('umfrage-host'); session = null; state = null; submissions = [];
+  usePicker('setup');
   $('game').classList.add('hidden'); $('setup').classList.remove('hidden');
   window.scrollTo(0, 0);
 };
 
+// Fragen-Auswahl zwischen Setup und Lobby verschieben
+function usePicker(where) {
+  pickTarget = where;
+  (where === 'lobby' ? $('lobbyPickerSlot') : $('setupPickerSlot')).appendChild($('qCard'));
+  $('qStep').textContent = where === 'lobby' ? '' : '4. ';
+  $('openHint').classList.toggle('hidden', where === 'lobby' || cfg.mode !== 'open');
+  renderPicker();
+}
+
 socket.on('connect', () => {
   if (session) socket.emit('host:resume', session, (res) => {
     if (res.error) { store.del('umfrage-host'); session = null; return; }
+    handleInfo(res.info);
     showGame(res.state);
   });
 });
 socket.on('state', (s) => { if (session && s.code === session.code) showGame(s); });
+socket.on('hostinfo', (info) => { if (session && info.code === session.code) handleInfo(info); });
+
+function handleInfo(info) {
+  if (!info) return;
+  lobbyQs = info.questions;
+  submissions = info.submissions;
+  if (session?.archiveId) {
+    archiveSession(session.archiveId, state?.title || cfg.title);
+    for (const s of submissions) archiveAdd(session.archiveId, s.text, 'spieler');
+  }
+  if (pickTarget === 'lobby') renderPicker();
+  renderLobbyExtras();
+}
+
+function renderLobbyExtras() {
+  $('lobbyQs').textContent = lobbyQs.length;
+  $('subCount').textContent = submissions.length ? `(${submissions.length})` : '';
+  $('noSubs').classList.toggle('hidden', submissions.length > 0);
+  $('takeAllSubs').classList.toggle('hidden', !submissions.some((s) => !isPicked(s.text)));
+  $('subList').innerHTML = submissions
+    .slice().reverse()
+    .map((s) => {
+      const on = isPicked(s.text);
+      return `<li class="q-item${on ? ' on' : ''}" data-sub="${s.id}"><input type="checkbox" ${on ? 'checked' : ''} tabindex="-1" />
+        <span class="q-text">${esc(s.text)}</span><span class="tag">${on ? 'im Spiel' : 'übernehmen'}</span></li>`;
+    })
+    .join('');
+}
+$('subList').onclick = (e) => {
+  const li = e.target.closest('[data-sub]'); if (!li) return;
+  const s = submissions.find((x) => x.id === +li.dataset.sub);
+  if (s) togglePick(s.text);
+};
+$('takeAllSubs').onclick = () => addPicks(submissions.map((s) => s.text));
 
 function showGame(s) {
   const prev = state;
@@ -316,7 +487,9 @@ function showGame(s) {
   $('setup').classList.add('hidden');
   $('game').classList.remove('hidden');
   $('gTitle').textContent = s.title;
-  $('gSub').textContent = s.phase === 'lobby' ? `${s.totalQuestions} Fragen · ${s.options.length} Antwortmöglichkeiten` : '';
+  $('gSub').textContent = s.phase === 'lobby'
+    ? (s.mode === 'open' ? 'Modus: Alle reichen Fragen ein' : 'Modus: Host stellt die Fragen') + ` · ${s.options.length} Antwortmöglichkeiten`
+    : '';
   for (const v of ['vLobby', 'vVoting', 'vResults', 'vEnd']) $(v).classList.add('hidden');
   const head = `Frage ${s.index + 1} von ${s.totalQuestions}`;
   const isLast = s.index + 1 >= s.totalQuestions;
@@ -328,7 +501,13 @@ function showGame(s) {
     $('lobbyCode').textContent = s.code;
     $('lobbyLink').textContent = url;
     $('lobbyPlayers').textContent = s.players;
-  } else if (s.phase === 'voting') {
+    $('subCard').classList.toggle('hidden', s.mode !== 'open');
+    if (s.mode === 'open' && pickTarget !== 'lobby') usePicker('lobby');
+    renderLobbyExtras();
+  } else {
+    if (pickTarget === 'lobby') usePicker('setup');
+  }
+  if (s.phase === 'voting') {
     $('vVoting').classList.remove('hidden');
     $('vqHead').textContent = head;
     $('vqText').textContent = s.question;
@@ -337,7 +516,7 @@ function showGame(s) {
     $('vqBar').style.width = s.players ? `${Math.min(100, (s.voted / s.players) * 100)}%` : '0';
     $('vqOptions').innerHTML = s.options.map((o, i) => `<div class="vote-btn center" style="background:${colorFor(i)};display:flex;align-items:center;justify-content:center">${esc(o)}</div>`).join('');
     // Automatisch aufdecken, sobald alle abgestimmt haben
-    if (s.players > 0 && s.voted >= s.players) setTimeout(() => state === s && send('host:reveal'), 900);
+    if (s.players > 0 && s.voted >= s.players) setTimeout(() => state === s && send('host:reveal'), 1200);
   } else if (s.phase === 'results') {
     $('vResults').classList.remove('hidden');
     $('rqHead').textContent = head;
@@ -346,12 +525,11 @@ function showGame(s) {
     $('next').textContent = isLast ? 'Gesamtergebnis 🏁' : 'Nächste Frage ▶';
   } else if (s.phase === 'end') {
     $('vEnd').classList.remove('hidden');
-    $('endGame').classList.add('hidden');
-    $('endSummary').innerHTML = s.summary
-      .map((x, i) => `<div class="summary-item"><h3>${i + 1}. ${esc(x.question)}</h3>${resultsHTML(s.options, x.counts)}</div>`)
-      .join('');
+    $('endSummary').innerHTML = s.summary.length
+      ? s.summary.map((x, i) => `<div class="summary-item"><h3>${i + 1}. ${esc(x.question)}</h3>${resultsHTML(s.options, x.counts)}</div>`).join('')
+      : '<p class="muted">Es wurde keine Frage gespielt.</p>';
   }
-  if (s.phase !== 'end') $('endGame').classList.remove('hidden');
+  $('endGame').classList.toggle('hidden', s.phase === 'end');
 }
 </script>
 </body>

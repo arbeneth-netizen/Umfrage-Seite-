@@ -8,13 +8,23 @@ Nach jeder Frage gibt es ein Kreisdiagramm und eine Liste, wer wie viele Stimmen
 
 1. Startseite öffnen (`/`) – das ist deine Host-Ansicht (am besten auf Laptop/TV).
 2. **Überschrift** eintragen.
-3. **Namen** eintragen (jeder Name bekommt automatisch eine eigene Farbe).
-4. **Fragen** auswählen: Vorschläge anhaken, eigene Fragen eintragen, Reihenfolge anpassen.
+3. **Spielmodus** wählen:
+   - 🎤 **Ich stelle die Fragen** – du wählst vorher alle Fragen aus.
+   - ✍️ **Alle reichen Fragen ein** – jeder tippt in der Lobby am Handy eigene Fragen ein (anonym).
+     Du nimmst davon so viele ins Spiel, wie du willst, plus beliebig viele Vorschläge.
+4. **Namen** eintragen (jeder Name bekommt automatisch eine eigene Farbe).
+5. **Fragen** auswählen: über 200 Vorschläge in Kategorien (Team & Training, Party & Alkohol,
+   Frauen & Dating, 🔞 Schamlos, Persönlich & Ehrlich, Peinlich, Geld & Zukunft, Krasse Szenarien,
+   Charakter & Macken), Suche, eigene Fragen, Reihenfolge anpassen.
    Alles wird im Browser gespeichert – beim nächsten Mal ist es noch da.
-5. **Lobby starten** → QR-Code erscheint. Mitspieler scannen ihn (oder öffnen `/play.html` und geben den Code ein).
-6. **Spiel starten** → alle stimmen ab. Sobald alle abgestimmt haben, wird das Ergebnis automatisch gezeigt
+
+**📚 Archiv:** Jede eingetippte Frage (von dir oder den Spielern) wird automatisch im Archiv gespeichert,
+sortiert nach Session. Über „Archiv“ wählst du eine Session aus und übernimmst einzelne oder alle Fragen daraus.
+Das Archiv liegt im Browser des Host-Geräts – nutze also immer dasselbe Gerät/denselben Browser als Host.
+6. **Lobby starten** → QR-Code erscheint. Mitspieler scannen ihn (oder öffnen `/play.html` und geben den Code ein).
+7. **Spiel starten** → alle stimmen ab. Sobald alle abgestimmt haben, wird das Ergebnis automatisch gezeigt
    (oder du klickst auf „Ergebnis zeigen“).
-7. Am Ende gibt es eine Übersicht über alle Fragen.
+8. Am Ende gibt es eine Übersicht über alle Fragen.
 
 **Anonymität:** Der Server merkt sich nur eine zufällige Geräte-ID, damit jeder pro Frage nur einmal abstimmt.
 An die Geräte werden ausschließlich die Summen geschickt – niemand sieht, wer wen gewählt hat.
