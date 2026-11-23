@@ -56,7 +56,7 @@
     <!-- Namen wählen ("Wer hat's gesagt?") -->
     <div id="vClaim" class="card hidden">
       <h2>Wer bist du?</h2>
-      <p class="hint">Tippe auf deinen Namen. Keine Sorge: Deine Stimmen bleiben anonym – nur wenn deine Aussage gezogen wird, wird sie am Ende aufgelöst.</p>
+      <p class="hint" id="claimHint"></p>
       <div class="vote-grid" id="claimGrid"></div>
       <p class="err" id="claimErr"></p>
     </div>
@@ -151,6 +151,39 @@
     </div>
 
     <!-- Ende -->
+    <!-- ===== Impostor ===== -->
+    <div id="vRole" class="hidden">
+      <div class="q-head" id="roleHead"></div>
+      <div class="secret hidden" id="outBanner">Du bist raus – schau zu, wie es weitergeht.</div>
+      <div class="role-card covered" id="roleCard"></div>
+      <div class="spacer"></div>
+      <button class="big" id="coverBtn">Verdecken</button>
+      <div class="rule hidden" id="impRule">Hör gut zu und versuch, das Wort zu erraten. <b>Kennst du es? Ruf es laut rein!</b> Richtig → die Impostor gewinnen. Falsch → du fliegst raus.</div>
+      <p class="center muted" id="roleStatus" style="margin-top:14px"></p>
+    </div>
+
+    <div id="vImpVote" class="hidden">
+      <div class="q-head" id="ivHead"></div>
+      <div class="q-big">Wer ist der Impostor?</div>
+      <div class="secret hidden" id="ivOut">Du bist raus und kannst nicht mehr abstimmen.</div>
+      <div class="vote-grid" id="ivOptions"></div>
+      <p class="center muted" id="ivStatus" style="margin-top:16px"></p>
+    </div>
+
+    <div id="vKicked" class="hidden">
+      <div class="q-head" id="kHead"></div>
+      <div id="kBanner"></div>
+      <div id="kResult"></div>
+      <div id="kChart"></div>
+      <p class="center muted" id="kWait" style="margin-top:14px">Der Host entscheidet, wie es weitergeht<span class="dots"></span></p>
+    </div>
+
+    <div id="vImpOver" class="hidden">
+      <div class="q-head" id="ioHead"></div>
+      <div id="ioResult"></div>
+      <p class="center muted" style="margin-top:14px">Warte auf die nächste Runde<span class="dots"></span></p>
+    </div>
+
     <div id="vEnd" class="hidden">
       <div class="eyebrow">Spiel vorbei</div>
       <h2 style="font-size:26px">Alle Ergebnisse</h2>
@@ -166,6 +199,9 @@
 <script>
 const $ = (id) => document.getElementById(id);
 $('logoMark').innerHTML = LOGO_SVG;
+// Eingebettet beim Host ("Host spielt mit")
+const EMBED = new URLSearchParams(location.search).get('embed') === '1';
+if (EMBED) document.body.classList.add('embed');
 $('menuBtn').innerHTML = ICONS.menu;
 for (const el of document.querySelectorAll('[data-ico]')) el.innerHTML = ICONS[el.dataset.ico];
 $('menuBtn').onclick = (e) => { e.stopPropagation(); $('menuPop').classList.toggle('hidden'); };
@@ -279,6 +315,27 @@ $('subForm').onsubmit = (e) => {
   });
 };
 
+// ---------- Impostor: Karte aufdecken / verdecken ----------
+let peek = false;      // Wort gerade sichtbar?
+let peekRound = null;
+$('roleCard').onclick = () => { if (me.role) $('coverBtn').click(); };
+$('coverBtn').onclick = () => {
+  if (peek) { peek = false; socket.emit('player:cover', { covered: true }); render(state); }
+  else { peek = true; render(state); }
+};
+$('ivOptions').onclick = (e) => { const b = e.target.closest('button[data-i]'); if (b) vote(+b.dataset.i); };
+
+function roleCardHTML() {
+  if (!peek) {
+    return `${ICONS.eye}<div class="rc-small">${me.covered ? 'Verdeckt ✓' : 'Deine Karte'}</div><div class="rc-word" style="font-size:24px">Tippen zum ${me.covered ? 'Ansehen' : 'Aufdecken'}</div><div class="rc-sub">Halt das Handy so, dass niemand mitliest.</div>`;
+  }
+  if (me.role === 'impostor') {
+    const tip = me.hint ? `<div class="rc-tip">Tipp: ${esc(me.deck || '')}${me.deck ? ' · ' : ''}${esc(me.hint)}</div>` : '<div class="rc-tip">Ohne Tipp – viel Glück!</div>';
+    return `${ICONS.impostor}<div class="rc-small">Deine Rolle</div><div class="rc-word">Impostor</div><div class="rc-sub">Du kennst das Wort nicht.</div>${tip}`;
+  }
+  return `<div class="rc-small">Dein Wort</div><div class="rc-word">${esc(me.word || '')}</div><div class="rc-sub">${esc(me.deck || '')}</div>`;
+}
+
 // ---------- Darstellung ----------
 function voteButtons(s) {
   const chosen = me.voteKey === s.voteKey ? me.myVote : null;
@@ -291,7 +348,8 @@ function voteButtons(s) {
 function render(s) {
   const prev = state;
   state = s;
-  document.body.className = `m-${s.mode}`;
+  document.body.classList.remove('m-host', 'm-open', 'm-said', 'm-impostor');
+  document.body.classList.add(`m-${s.mode}`);
   $('vJoin').classList.add('hidden');
   $('vGame').classList.remove('hidden');
   $('gTitle').textContent = s.title;
@@ -300,20 +358,28 @@ function render(s) {
   $('codePill').classList.remove('hidden');
 
   const said = s.mode === 'said';
-  const needName = said && (me.myName == null || wantRename) && ['lobby', 'writing', 'roundEnd'].includes(s.phase);
+  const imp = s.mode === 'impostor';
+  if (imp && peekRound !== s.round) { peekRound = s.round; peek = false; }
+  const needName = (said && (me.myName == null || wantRename) && ['lobby', 'writing', 'roundEnd'].includes(s.phase))
+    || (imp && s.phase !== 'end' && (me.myName == null || (wantRename && ['lobby', 'roundOver'].includes(s.phase))));
   const needAck = said && s.phase === 'writing' && !needName && ackRound !== s.round && !me.myAnswer;
-  const view = needName ? 'vClaim' : needAck ? 'vDisclaimer' : {
+  const view = needName ? 'vClaim' : needAck ? 'vDisclaimer' : imp ? {
+    lobby: 'vLobby', roles: me.role ? 'vRole' : 'vImpOver', voting: 'vImpVote', kicked: 'vKicked', roundOver: 'vImpOver', end: 'vEnd',
+  }[s.phase] : {
     lobby: 'vLobby', voting: 'vVoting', results: 'vResults', writing: 'vWriting',
     guess: 'vGuess', reveal: 'vReveal', roundEnd: 'vRoundEnd', end: 'vEnd',
   }[s.phase];
   const changed = !prev || prev.phase !== s.phase || prev.voteKey !== s.voteKey || $(view).classList.contains('hidden');
-  for (const v of ['vClaim', 'vDisclaimer', 'vLobby', 'vVoting', 'vResults', 'vWriting', 'vGuess', 'vReveal', 'vRoundEnd', 'vEnd']) {
+  for (const v of ['vClaim', 'vDisclaimer', 'vLobby', 'vVoting', 'vResults', 'vWriting', 'vGuess', 'vReveal', 'vRoundEnd', 'vRole', 'vImpVote', 'vKicked', 'vImpOver', 'vEnd']) {
     $(v).classList.toggle('hidden', v !== view);
     if (v === view && changed) { $(v).classList.remove('view'); void $(v).offsetWidth; $(v).classList.add('view'); }
   }
 
   switch (view) {
     case 'vClaim':
+      $('claimHint').textContent = imp
+        ? 'Tippe auf deinen Namen. Danach bekommst du dein Wort – oder du bist der Impostor.'
+        : 'Tippe auf deinen Namen. Keine Sorge: Deine Stimmen bleiben anonym – nur wenn deine Aussage gezogen wird, wird sie am Ende aufgelöst.';
       $('claimGrid').innerHTML = s.options
         .map((o, i) => {
           const taken = s.claimed.includes(i) && me.myName !== i;
@@ -325,8 +391,8 @@ function render(s) {
       $('dHead').textContent = `Runde ${s.round}`;
       break;
     case 'vLobby':
-      $('lobbyHello').textContent = said && me.myName != null ? `Hi ${s.options[me.myName]}! 👋` : 'Du bist drin!';
-      $('changeName').classList.toggle('hidden', !said);
+      $('lobbyHello').textContent = (said || imp) && me.myName != null ? `Hi ${s.options[me.myName]}! 👋` : 'Du bist drin!';
+      $('changeName').classList.toggle('hidden', !(said || imp));
       $('lobbyPlayers').textContent = `${s.players} Spieler in der Lobby` + (s.mode === 'open' ? ` · ${s.submissions} Fragen eingereicht` : '');
       $('subForm').classList.toggle('hidden', !s.allowSubmit);
       $('subTitle').textContent = said ? 'Eigene Meinungsfrage einreichen' : 'Deine Fragen einreichen';
@@ -380,6 +446,47 @@ function render(s) {
         $('xResults').innerHTML = resultsHTML(s.options, s.counts);
         if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
       }
+      break;
+    case 'vRole': {
+      $('roleHead').textContent = `Runde ${s.round} · ${s.impostorCount} Impostor im Spiel`;
+      $('outBanner').classList.toggle('hidden', me.alive !== false);
+      const card = $('roleCard');
+      card.className = `role-card ${peek ? me.role : 'covered'}`;
+      card.innerHTML = roleCardHTML();
+      $('coverBtn').textContent = peek ? 'Verdecken' : me.covered ? 'Nochmal ansehen' : 'Aufdecken';
+      $('impRule').classList.toggle('hidden', !(peek && me.role === 'impostor'));
+      $('roleStatus').textContent = `${s.covered.length} von ${s.alive.length} haben verdeckt · Reihum sagt jeder einen passenden Begriff`;
+      break;
+    }
+    case 'vImpVote': {
+      $('ivHead').textContent = `Runde ${s.round} · Abstimmung`;
+      const out = me.alive === false || me.myName == null || !s.alive.includes(me.myName);
+      $('ivOut').classList.toggle('hidden', !out);
+      const chosen = me.voteKey === s.voteKey ? me.myVote : null;
+      $('ivOptions').innerHTML = out ? '' : s.alive
+        .filter((i) => i !== me.myName)
+        .map((i) => `<button class="vote-btn${chosen === i ? ' chosen' : ''}" data-i="${i}" style="background:${colorFor(i)}">${esc(s.options[i])}</button>`)
+        .join('');
+      $('ivOptions').classList.toggle('has-choice', chosen !== null);
+      $('ivStatus').textContent = chosen !== null
+        ? `✅ Abgestimmt (anonym) · ${s.voted} von ${s.voters} – du kannst noch umentscheiden`
+        : `${s.voted} von ${s.voters} haben abgestimmt`;
+      break;
+    }
+    case 'vKicked':
+      $('kHead').textContent = `Runde ${s.round}`;
+      if (changed) {
+        $('kBanner').innerHTML = kickedHTML(s.options, s.kicked);
+        $('kResult').innerHTML = s.result ? impResultHTML(s.options, s.result) + scoreboardHTML(s.options, s.scores) : '';
+        $('kChart').innerHTML = s.counts ? `<h3 class="mini">Abstimmung</h3>${resultsHTML(s.options, s.counts)}` : '';
+        if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
+      }
+      break;
+    case 'vImpOver':
+      $('ioHead').textContent = s.phase === 'roles' ? `Runde ${s.round} läuft` : `Runde ${s.round}`;
+      $('ioResult').innerHTML = s.phase === 'roles'
+        ? '<div class="card waiting"><div class="emoji">⏳</div><h2>Runde läuft schon</h2><p class="muted">Du bist ab der nächsten Runde dabei.</p></div>'
+        : (s.result ? impResultHTML(s.options, s.result) : '') + scoreboardHTML(s.options, s.scores);
       break;
     case 'vEnd':
       if (changed) $('endSummary').innerHTML = summaryHTML(s);

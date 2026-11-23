@@ -15,6 +15,7 @@ const MODES = {
   host: { name: 'Klassisch', emoji: '🎤' },
   open: { name: 'Fragen-Mix', emoji: '✍️' },
   said: { name: 'Wer hat’s gesagt?', emoji: '🕵️' },
+  impostor: { name: 'Impostor', emoji: '🎭' },
 };
 
 // Logo: kleines Kreisdiagramm
@@ -42,6 +43,12 @@ const ICONS = {
   help: ICON('<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.9.8c0 1.7-2.4 2.2-2.4 3.7M12 17h.01"/>'),
   install: ICON('<path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/>'),
   play: ICON('<path d="M7 4l12 8-12 8z"/>'),
+  user: ICON('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'),
+  impostor: ICON('<path d="M12 3c-4 0-7 3-7 7v9l2.5-2 2 2 2.5-2 2.5 2 2-2 2.5 2v-9c0-4-3-7-7-7z"/><path d="M9 10h.01M15 10h.01"/>'),
+  cards: ICON('<rect x="3" y="6" width="13" height="15" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v13"/>'),
+  back: ICON('<path d="M15 18l-6-6 6-6"/>'),
+  eye: ICON('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
+  eyeOff: ICON('<path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6C3.7 8.4 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>'),
   leave: ICON('<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/>'),
 };
 
@@ -133,8 +140,45 @@ function quoteHTML(prompt, quote) {
   return `<div class="prompt-small">${esc(prompt)}</div><blockquote class="quote">${esc(quote)}</blockquote>`;
 }
 
+// ---------- Impostor ----------
+function kickedHTML(options, k) {
+  if (!k) return '';
+  if (k.tie) return `<div class="verdict neutral"><div class="small">Abstimmung</div><div class="name">Unentschieden</div><div class="sub2">Niemand fliegt raus.</div></div>`;
+  const who = esc(options[k.name]);
+  if (k.guessed && k.correct) return `<div class="verdict bad"><div class="small">Wort erraten</div><div class="name">${who}</div><div class="sub2">war Impostor und kannte das Wort.</div></div>`;
+  const title = k.guessed ? 'Falsches Wort – raus' : 'Rausgeworfen';
+  return `<div class="verdict ${k.wasImpostor ? 'good' : 'bad'}" style="--c:${colorFor(k.name)}">
+    <div class="small">${title}</div><div class="name">${who}</div>
+    <div class="sub2">${k.wasImpostor ? 'war ein Impostor ✓' : 'war unschuldig ✗'}</div></div>`;
+}
+function impResultHTML(options, r) {
+  if (!r) return '';
+  const imps = r.impostors.map((i) => `<span class="p-chip in" style="background:${colorFor(i)}">${esc(options[i])}</span>`).join('');
+  const head = r.winner === 'crew' ? 'Die Crew gewinnt' : r.winner === 'impostor' ? 'Die Impostor gewinnen' : 'Runde aufgelöst';
+  return `<div class="result-box ${r.winner || 'none'}">
+    <div class="result-head">${head}</div>
+    <div class="muted">${esc(r.reason)}</div>
+    <div class="result-grid">
+      <div><div class="sec-label">Das Wort</div><div class="result-word">${esc(r.word)}</div><div class="muted" style="font-size:14px">${esc(r.deck)}</div></div>
+      <div><div class="sec-label">${r.impostors.length === 1 ? 'Impostor' : 'Impostor'}</div><div class="players-row">${imps}</div></div>
+    </div>
+  </div>`;
+}
+function scoreboardHTML(options, scores) {
+  if (!scores || !scores.length) return '';
+  return `<div class="scoreboard"><div class="sec-label">Punktestand</div>${scores
+    .map((x, n) => `<div class="score-row"><span class="rank">${n + 1}</span><span class="dot" style="background:${colorFor(x.name)}"></span><b>${esc(options[x.name])}</b><span class="pts">${x.pts}</span></div>`)
+    .join('')}<div class="muted" style="font-size:13px;margin-top:6px">Crew-Sieg +1 · Impostor-Sieg +2</div></div>`;
+}
+
 // Zusammenfassung am Spielende
 function summaryHTML(s) {
+  if (s.mode === 'impostor') {
+    const rounds = (s.summary || [])
+      .map((h) => `<div class="summary-item"><div class="q-head">Runde ${h.round}</div>${impResultHTML(s.options, h)}</div>`)
+      .join('');
+    return scoreboardHTML(s.options, s.scores) + (rounds || '<p class="muted">Es wurde keine Runde gespielt.</p>');
+  }
   if (!s.summary || !s.summary.length) return '<p class="muted">Es wurde nichts gespielt.</p>';
   if (s.mode === 'said') {
     return s.summary

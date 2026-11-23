@@ -8,6 +8,8 @@
 //   open – alle reichen in der Lobby Fragen ein, der Host wählt aus
 //   said – "Wer hat's gesagt?": jeder beantwortet eine Meinungsfrage, 1–4 Aussagen
 //          werden gezogen, die Gruppe rät, von wem sie stammen
+//   impostor – alle bekommen dasselbe Wort, nur die Impostor nicht; die Gruppe
+//          versucht per Abstimmung die Impostor rauszuwerfen
 
 const path = require('path');
 const http = require('http');
@@ -59,6 +61,20 @@ function shuffle(a) {
   return a;
 }
 
+// Wörter für Impostor: [{ w: Wort, d: Deck, h: Tipp }]
+function cleanWords(list) {
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  const seen = new Set();
+  for (const x of list.slice(0, 5000)) {
+    const w = String(x?.w ?? '').trim().slice(0, 60);
+    if (!w || seen.has(w.toLowerCase())) continue;
+    seen.add(w.toLowerCase());
+    out.push({ w, d: String(x?.d ?? '').trim().slice(0, 40), h: String(x?.h ?? '').trim().slice(0, 60) });
+  }
+  return out;
+}
+
 function cleanList(list, maxItems, maxLen) {
   if (!Array.isArray(list)) return [];
   const seen = new Set();
@@ -104,6 +120,8 @@ function publicState(room) {
     voted: votes ? votes.size : 0,
   };
 
+  if (room.mode === 'impostor') return impostorState(room, base);
+
   if (room.mode !== 'said') {
     const q = room.current;
     return {
@@ -136,6 +154,69 @@ function publicState(room) {
   };
 }
 
+// ---------- Impostor ----------
+const nameOf = (room, pid) => room.claims.get(pid);
+const aliveNames = (room) => [...room.alive].map((pid) => nameOf(room, pid)).filter((x) => x != null);
+function impostorState(room, base) {
+  const showResult = room.result && ['kicked', 'roundOver', 'end'].includes(room.phase);
+  return {
+    ...base,
+    round: room.round,
+    claimed: [...room.claims.values()],
+    alive: aliveNames(room),
+    impostorCount: room.roundImpostors || room.impostorCount,
+    hints: room.hints,
+    covered: [...room.covered].filter((pid) => room.alive.has(pid)).map((pid) => nameOf(room, pid)),
+    voters: room.alive.size,
+    words: room.words.length,
+    kicked: ['kicked'].includes(room.phase) ? room.kicked : null,
+    counts: room.phase === 'kicked' && room.kicked?.byVote ? tally(room, room.voteKey) : null,
+    result: showResult ? room.result : null,
+    scores: [...room.scores.entries()].map(([name, pts]) => ({ name, pts })).sort((a, b) => b.pts - a.pts),
+    summary: room.phase === 'end' ? room.history : null,
+  };
+}
+function startImpostorRound(room) {
+  const pids = [...room.claims.keys()];
+  if (pids.length < 3) return 'Für Impostor braucht ihr mindestens 3 Spieler mit Namen.';
+  if (!room.words.length) return 'Es sind keine Wörter ausgewählt.';
+  if (!room.wordQueue.length) room.wordQueue = shuffle(room.words.slice());
+  room.word = room.wordQueue.pop();
+  const n = Math.max(1, Math.min(room.impostorCount, Math.ceil(pids.length / 2) - 1));
+  room.roundImpostors = n;
+  room.impostors = new Set(shuffle(pids.slice()).slice(0, n));
+  room.alive = new Set(pids);
+  room.covered = new Set();
+  room.kicked = null;
+  room.result = null;
+  room.round++;
+  room.phase = 'roles';
+  return null;
+}
+// Prüft, ob eine Seite gewonnen hat
+function checkImpostorWin(room) {
+  const aliveImp = [...room.alive].filter((pid) => room.impostors.has(pid)).length;
+  const aliveCrew = room.alive.size - aliveImp;
+  if (aliveImp === 0) return finishImpostorRound(room, 'crew', 'Alle Impostor wurden enttarnt.');
+  if (aliveImp >= aliveCrew) return finishImpostorRound(room, 'impostor', 'Die Impostor sind in der Überzahl.');
+  return false;
+}
+function finishImpostorRound(room, winner, reason) {
+  const impNames = [...room.impostors].map((pid) => nameOf(room, pid));
+  room.result = { winner, reason, word: room.word.w, deck: room.word.d, impostors: impNames };
+  // Punkte: Crew-Sieg = +1 für jedes Crew-Mitglied, Impostor-Sieg = +2 für jeden Impostor
+  if (winner) {
+    for (const [pid, name] of room.claims) {
+      const isImp = room.impostors.has(pid);
+      if (!room.roundPlayers.has(pid)) continue; // nur wer in dieser Runde mitgespielt hat
+      if (winner === 'crew' && !isImp) room.scores.set(name, (room.scores.get(name) || 0) + 1);
+      if (winner === 'impostor' && isImp) room.scores.set(name, (room.scores.get(name) || 0) + 2);
+    }
+  }
+  room.history.push({ round: room.round, word: room.word.w, deck: room.word.d, impostors: impNames, winner, reason });
+  return true;
+}
+
 // Nur für den Host: komplette Fragenliste + eingereichte Fragen (ohne Absender)
 // Bei "Wer hat's gesagt?" zusätzlich: wer welche Frage bekommen und schon beantwortet hat (ohne Antworttext)
 const hostInfo = (room) => ({
@@ -159,6 +240,20 @@ function privateInfo(room, pid) {
     isMine: room.mode === 'said' && ['guess', 'reveal'].includes(room.phase) && pick?.pid === pid,
     voteKey: room.voteKey,
     myVote: currentVotes(room)?.get(pid) ?? null,
+    ...(room.mode === 'impostor' ? impostorPrivate(room, pid) : {}),
+  };
+}
+function impostorPrivate(room, pid) {
+  const inRound = room.phase !== 'lobby' && room.word && room.alive && (room.alive.has(pid) || room.roundPlayers?.has(pid));
+  if (!inRound || room.phase === 'end') return { role: null };
+  const isImp = room.impostors.has(pid);
+  return {
+    role: isImp ? 'impostor' : 'crew',
+    word: isImp ? null : room.word.w,
+    deck: isImp && !room.hints ? null : room.word.d,
+    hint: isImp && room.hints ? room.word.h : null,
+    covered: room.covered.has(pid),
+    alive: room.alive.has(pid),
   };
 }
 
@@ -201,12 +296,14 @@ io.on('connection', (socket) => {
   // ================= Host =================
   socket.on('host:create', (payload, ack) => {
     const title = String(payload?.title || '').trim().slice(0, 120) || 'Wer würde am ehesten …?';
-    const mode = ['host', 'open', 'said'].includes(payload?.mode) ? payload.mode : 'host';
+    const mode = ['host', 'open', 'said', 'impostor'].includes(payload?.mode) ? payload.mode : 'host';
     const options = cleanList(payload?.options, 30, 40);
     const questions = cleanList(payload?.questions, MAX_QUESTIONS, 200);
     const perRound = Math.min(4, Math.max(1, Number(payload?.perRound) || 2));
     if (options.length < 2) return ack?.({ error: 'Bitte mindestens 2 Namen eintragen.' });
-    if (mode !== 'open' && questions.length < 1) return ack?.({ error: 'Bitte mindestens 1 Frage auswählen.' });
+    const words = cleanWords(payload?.words);
+    if ((mode === 'host' || mode === 'said') && questions.length < 1) return ack?.({ error: 'Bitte mindestens 1 Frage auswählen.' });
+    if (mode === 'impostor' && !words.length) return ack?.({ error: 'Bitte mindestens ein Wort-Deck auswählen.' });
 
     const code = newCode();
     const room = {
@@ -234,6 +331,20 @@ io.on('connection', (socket) => {
       picks: [],
       pickIdx: 0,
       promptQueue: [],
+      // Impostor
+      words,
+      wordQueue: [],
+      word: null,
+      impostorCount: Math.min(3, Math.max(1, Number(payload?.impostorCount) || 1)),
+      roundImpostors: 0,
+      hints: payload?.hints !== false,
+      impostors: new Set(),
+      alive: new Set(),
+      roundPlayers: new Set(),
+      covered: new Set(),
+      kicked: null,
+      result: null,
+      scores: new Map(),
       touched: Date.now(),
     };
     rooms.set(code, room);
@@ -262,6 +373,38 @@ io.on('connection', (socket) => {
     if (!room) return ack?.({ error: 'Spiel nicht gefunden.' });
     // Schutz vor Doppelklicks: nur weiterschalten, wenn wir noch in der erwarteten Phase sind
     if (payload?.from && payload.from !== room.phase) return ack?.({ ok: true });
+
+    if (room.mode === 'impostor') {
+      switch (room.phase) {
+        case 'lobby':
+        case 'roundOver': {
+          const err = startImpostorRound(room);
+          if (err) return ack?.({ error: err });
+          room.roundPlayers = new Set(room.alive);
+          break;
+        }
+        case 'roles':
+          openVote(room);
+          room.phase = 'voting';
+          break;
+        case 'voting':
+          resolveImpostorVote(room);
+          break;
+        case 'kicked':
+          if (room.result) {
+            const err = startImpostorRound(room);
+            if (err) return ack?.({ error: err });
+            room.roundPlayers = new Set(room.alive);
+          } else {
+            room.phase = 'roles'; // weiterspielen mit demselben Wort
+          }
+          break;
+        default:
+          return ack?.({ error: 'Das Spiel ist vorbei.' });
+      }
+      ack?.({ ok: true });
+      return broadcast(room);
+    }
 
     if (room.mode !== 'said') {
       if (room.phase === 'lobby' && !room.questions.length) return ack?.({ error: 'Nimm erst mindestens 1 Frage ins Spiel.' });
@@ -314,6 +457,67 @@ io.on('connection', (socket) => {
     broadcast(room);
   });
 
+  function resolveImpostorVote(room) {
+    const counts = tally(room, room.voteKey);
+    const max = Math.max(...counts);
+    const top = counts.map((c, i) => (c === max ? i : -1)).filter((i) => i >= 0);
+    room.phase = 'kicked';
+    if (max === 0 || top.length > 1) {
+      room.kicked = { byVote: true, tie: true };
+      return;
+    }
+    const pid = [...room.alive].find((p) => nameOf(room, p) === top[0]);
+    if (!pid) { room.kicked = { byVote: true, tie: true }; return; }
+    room.alive.delete(pid);
+    room.kicked = { byVote: true, name: top[0], wasImpostor: room.impostors.has(pid) };
+    checkImpostorWin(room);
+  }
+
+  // Ein Spieler hat laut ein Wort reingerufen – der Host entscheidet, ob es richtig war
+  socket.on('host:guess', (payload, ack) => {
+    const room = hostRoom(payload);
+    if (!room || room.mode !== 'impostor' || !['roles', 'voting'].includes(room.phase)) return ack?.({ error: 'Gerade nicht möglich.' });
+    const name = Number(payload?.option);
+    const pid = [...room.alive].find((p) => nameOf(room, p) === name);
+    if (!pid) return ack?.({ error: 'Dieser Spieler ist nicht (mehr) im Spiel.' });
+    const isImp = room.impostors.has(pid);
+    if (payload?.correct) {
+      if (!isImp) return ack?.({ error: 'Das war gar kein Impostor – er kannte das Wort ja.' });
+      room.phase = 'kicked';
+      room.kicked = { guessed: true, name, wasImpostor: true, correct: true };
+      finishImpostorRound(room, 'impostor', `${room.options[name]} hat das Wort erraten.`);
+    } else {
+      room.alive.delete(pid);
+      room.phase = 'kicked';
+      room.kicked = { guessed: true, name, wasImpostor: isImp, correct: false };
+      checkImpostorWin(room);
+    }
+    ack?.({ ok: true });
+    broadcast(room);
+  });
+
+  // Runde abbrechen und auflösen
+  socket.on('host:endRound', (payload) => {
+    const room = hostRoom(payload);
+    if (!room || room.mode !== 'impostor' || !room.word || ['lobby', 'roundOver', 'end'].includes(room.phase)) return;
+    if (!room.result) finishImpostorRound(room, null, 'Runde beendet.');
+    room.phase = 'roundOver';
+    broadcast(room);
+  });
+
+  // Wörter im laufenden Spiel ändern (gilt ab der nächsten Runde)
+  socket.on('host:words', (payload) => {
+    const room = hostRoom(payload);
+    if (!room || room.mode !== 'impostor') return;
+    const words = cleanWords(payload?.words);
+    if (!words.length) return;
+    room.words = words;
+    room.wordQueue = [];
+    if (payload?.impostorCount) room.impostorCount = Math.min(3, Math.max(1, Number(payload.impostorCount)));
+    if (typeof payload?.hints === 'boolean') room.hints = payload.hints;
+    broadcast(room);
+  });
+
   function revealSaid(room) {
     const pick = room.picks[room.pickIdx];
     room.phase = 'reveal';
@@ -329,6 +533,11 @@ io.on('connection', (socket) => {
   socket.on('host:reveal', (payload) => {
     const room = hostRoom(payload);
     if (!room) return;
+    if (room.mode === 'impostor') {
+      if (room.phase !== 'voting') return;
+      resolveImpostorVote(room);
+      return broadcast(room);
+    }
     if (room.phase === 'voting') {
       room.phase = 'results';
       room.history.push({ question: room.questions[room.current], counts: tally(room, room.voteKey) });
@@ -341,7 +550,8 @@ io.on('connection', (socket) => {
   socket.on('host:end', (payload) => {
     const room = hostRoom(payload);
     if (!room) return;
-    if (room.phase === 'voting') room.history.push({ question: room.questions[room.current], counts: tally(room, room.voteKey) });
+    if (room.mode === 'impostor' && room.word && !room.result && !['lobby', 'roundOver'].includes(room.phase)) finishImpostorRound(room, null, 'Spiel beendet.');
+    if (room.mode !== 'impostor' && room.phase === 'voting') room.history.push({ question: room.questions[room.current], counts: tally(room, room.voteKey) });
     room.phase = 'end';
     broadcast(room);
   });
@@ -368,9 +578,12 @@ io.on('connection', (socket) => {
   // Namen wählen ("Wer hat's gesagt?")
   socket.on('player:claim', (payload, ack) => {
     const room = playerRoom();
-    if (!room || room.mode !== 'said') return ack?.({ error: 'Nicht möglich.' });
+    if (!room || !['said', 'impostor'].includes(room.mode)) return ack?.({ error: 'Nicht möglich.' });
     const pid = socket.data.pid;
     const opt = Number(payload?.option);
+    if (room.mode === 'impostor' && room.alive.has(pid) && !['lobby', 'roundOver'].includes(room.phase)) {
+      return ack?.({ error: 'Während einer Runde kannst du deinen Namen nicht ändern.' });
+    }
     if (!Number.isInteger(opt) || opt < 0 || opt >= room.options.length) return ack?.({ error: 'Ungültiger Name.' });
     for (const [other, o] of room.claims) if (o === opt && other !== pid) return ack?.({ error: 'Der Name ist schon vergeben.' });
     // Wer schon eine Aussage abgeschickt hat, kann den Namen in dieser Runde nicht mehr wechseln
@@ -380,6 +593,15 @@ io.on('connection', (socket) => {
     room.claims.set(pid, opt);
     if (room.phase === 'writing' && !room.assign.has(pid)) assignPrompt(room, pid);
     ack?.({ ok: true });
+    broadcast(room);
+  });
+
+  // Wort verdecken / wieder ansehen (Impostor)
+  socket.on('player:cover', (payload) => {
+    const room = playerRoom();
+    if (!room || room.mode !== 'impostor' || !room.alive.has(socket.data.pid)) return;
+    if (payload?.covered) room.covered.add(socket.data.pid);
+    else room.covered.delete(socket.data.pid);
     broadcast(room);
   });
 
@@ -427,6 +649,11 @@ io.on('connection', (socket) => {
     }
     const opt = Number(payload?.option);
     if (!Number.isInteger(opt) || opt < 0 || opt >= room.options.length) return ack?.({ error: 'Ungültige Auswahl.' });
+    if (room.mode === 'impostor') {
+      if (!room.alive.has(socket.data.pid)) return ack?.({ error: 'Du bist raus und kannst nicht mehr abstimmen.' });
+      if (!aliveNames(room).includes(opt)) return ack?.({ error: 'Dieser Spieler ist schon raus.' });
+      if (nameOf(room, socket.data.pid) === opt) return ack?.({ error: 'Du kannst dich nicht selbst rauswerfen.' });
+    }
     currentVotes(room).set(socket.data.pid, opt); // erneutes Abstimmen ändert die Stimme
     ack?.({ ok: true });
     broadcast(room);

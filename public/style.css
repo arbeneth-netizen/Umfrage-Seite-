@@ -377,3 +377,159 @@ h3.mini { font-family: var(--font); font-size: 14px; text-transform: uppercase; 
 
 /* Kleines Menü (Spieler) */
 .menu-pop { position: fixed; right: 16px; top: 58px; background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-lg); padding: 6px; min-width: 220px; z-index: 50; animation: fadeUp .15s ease both; }
+
+/* ==========================================================
+   v4: Startseite, leichtere Einrichtung, Impostor, Mitspielen
+   ========================================================== */
+body.m-impostor { --accent: #111114; --accent-soft: #efeff3; }
+.page-title { font-size: clamp(26px, 4.6vw, 38px); margin: 0 0 6px; }
+
+/* ---------- Startseite ---------- */
+.home-head { padding: 10px 0 22px; }
+.home-head h1 { font-size: clamp(32px, 6vw, 52px); margin: 0 0 6px; }
+.home-head p { margin: 0; font-size: 17px; }
+.tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.tile {
+  --c: var(--red);
+  position: relative; display: grid; grid-template-rows: auto 1fr auto auto; gap: 4px; text-align: left;
+  min-height: 210px; padding: 22px; border-radius: 22px; border: 0; color: #fff; background: var(--c);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--c) 30%, transparent); overflow: hidden; justify-content: stretch; align-items: start;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.tile::after { content: ""; position: absolute; right: -50px; bottom: -70px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255,255,255,.1); }
+.tile:hover { transform: translateY(-2px); box-shadow: 0 16px 40px color-mix(in srgb, var(--c) 38%, transparent); }
+.tile.t-host { --c: #E63946; }
+.tile.t-open { --c: #1D7FE0; }
+.tile.t-said { --c: #8E44AD; }
+.tile.t-impostor { --c: #141418; background: radial-gradient(120% 120% at 100% 100%, #2a1015 0%, #141418 55%); box-shadow: 0 10px 30px rgba(17,17,20,.3); }
+.tile-ico { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: rgba(255,255,255,.18); }
+.tile-ico .ico { width: 26px; height: 26px; }
+.tile-name { font-size: 26px; font-weight: 800; letter-spacing: -.03em; align-self: end; margin-top: 18px; }
+.tile-desc { font-size: 15.5px; opacity: .85; font-weight: 500; }
+.tile-go { position: absolute; right: 20px; top: 16px; font-size: 30px; opacity: .7; }
+.tile-badge { position: absolute; right: 52px; top: 24px; font-size: 11px; font-weight: 800; letter-spacing: .08em; padding: 3px 9px; border-radius: 99px; background: #ff4d5e; }
+@media (max-width: 640px) {
+  .tiles { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tile { min-height: 168px; padding: 16px; border-radius: 18px; }
+  .tile-name { font-size: 19px; margin-top: 10px; }
+  .tile-desc { font-size: 13.5px; }
+  .tile-ico { width: 40px; height: 40px; border-radius: 12px; }
+  .tile-go { right: 14px; top: 10px; }
+  .tile-badge { right: 40px; top: 16px; }
+}
+.home-links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 22px; }
+.link-btn { background: var(--soft); color: var(--text); border: 0; border-radius: 12px; padding: 10px 14px; font-weight: 600; font-size: 14.5px; }
+.link-btn .ico { width: 18px; height: 18px; }
+.resume {
+  width: 100%; display: flex; align-items: center; gap: 14px; justify-content: flex-start; text-align: left; margin-bottom: 14px;
+  background: #fff; color: var(--text); border: 1.5px solid var(--text); border-radius: 16px; padding: 14px 16px;
+}
+.resume small { display: block; color: var(--muted); font-weight: 500; }
+.resume .chev { margin-left: auto; }
+
+/* ---------- Einrichtung (leichter) ---------- */
+.setup-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.panel { background: var(--softer); border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; margin-bottom: 12px; }
+.sec-label { font-size: 12.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.sec-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.title-input { font-size: 20px !important; font-weight: 700; border: 0 !important; background: transparent !important; padding: 6px 2px !important; box-shadow: none !important; }
+.add-row { display: flex; gap: 8px; }
+.add-row input { flex: 1; background: #fff; }
+.icon-only.dark { background: var(--text); color: #fff; border-color: var(--text); font-size: 22px; }
+.count-pill { font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 99px; background: #fff; border: 1px solid var(--line); }
+.preview { list-style: none; padding: 0; margin: 0 0 4px; display: grid; gap: 4px; }
+.preview li { padding: 8px 12px; background: #fff; border-radius: 10px; font-size: 15px; border: 1px solid var(--line); }
+.preview li.muted { background: none; border: 0; padding: 2px 12px; font-size: 14px; }
+.panel .setting { border-color: var(--line); }
+.panel .setting:first-of-type { padding-top: 10px; }
+
+/* Decks */
+.deck-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.deck {
+  display: flex; align-items: center; gap: 8px; background: #fff; color: var(--text); border: 1.5px solid var(--line);
+  border-radius: 12px; padding: 10px 12px; font-weight: 600; font-size: 14.5px; justify-content: flex-start; text-align: left;
+}
+.deck.on { border-color: var(--text); background: var(--text); color: #fff; }
+.deck-emoji { font-size: 18px; }
+.deck-name { flex: 1; }
+.deck-n { font-size: 12px; opacity: .6; font-weight: 700; }
+.word-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.word { background: #fff; color: var(--text); border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; font-weight: 500; font-size: 14px; }
+.word.off { text-decoration: line-through; opacity: .4; }
+.word.own { background: var(--text); color: #fff; border-color: var(--text); }
+
+/* Fenster */
+.sheet.wide { max-width: 820px; }
+.sel-details { margin-top: 14px; border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; }
+.sel-details summary { font-weight: 700; cursor: pointer; }
+.sel-details .selected-list { max-height: 300px; }
+
+/* ---------- Mitspielen ---------- */
+.play-toggle { background: #fff; color: var(--text); border: 1.5px solid var(--line); border-radius: 12px; padding: 8px 12px; font-size: 14px; gap: 6px; }
+.play-toggle .ico { width: 18px; height: 18px; }
+.play-toggle.on { background: var(--text); color: #fff; border-color: var(--text); }
+.pane-tabs { display: flex; gap: 4px; max-width: 1040px; margin: 0 auto; padding: 0 16px 10px; }
+.pane-tabs button { flex: 1; background: var(--soft); color: var(--muted); border: 0; border-radius: 10px; padding: 9px; font-size: 14px; }
+.pane-tabs button.on { background: var(--text); color: #fff; }
+.game-layout { display: block; }
+#playerPane { display: flex; flex-direction: column; gap: 8px; }
+#playerPane.hidden { display: none !important; }
+.pane-label { font-size: 12.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+#playerFrame { width: 100%; height: calc(100vh - 150px); min-height: 560px; border: 1px solid var(--line); border-radius: 20px; background: #fff; box-shadow: var(--shadow); }
+@media (min-width: 1100px) {
+  body.playing .wrap { max-width: 1480px; }
+  body.playing .game-layout { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 24px; align-items: start; }
+  body.playing #playerPane { position: sticky; top: 84px; }
+  body.playing .pane-tabs { display: none; }
+}
+@media (max-width: 1099px) {
+  body.playing.tab-player #hostPane { display: none; }
+  body.playing:not(.tab-player) #playerPane { display: none !important; }
+  body.playing #playerFrame { height: calc(100vh - 170px); }
+}
+
+/* ---------- Impostor ---------- */
+.p-chip.out { text-decoration: line-through; opacity: .45; }
+.verdict { border-radius: 18px; padding: 22px; text-align: center; margin-bottom: 18px; color: #fff; background: var(--c, #111114); animation: revealIn .45s ease-out both; }
+.verdict.neutral { background: var(--soft); color: var(--text); }
+.verdict .small { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+.verdict .name { font-size: clamp(34px, 7vw, 56px); font-weight: 800; letter-spacing: -.03em; line-height: 1.05; margin-top: 4px; }
+.verdict .sub2 { font-weight: 700; margin-top: 6px; font-size: 18px; }
+.result-box { border: 1.5px solid var(--line); border-radius: 18px; padding: 18px; margin-bottom: 16px; }
+.result-box.crew { border-color: color-mix(in srgb, var(--green) 50%, white); background: color-mix(in srgb, var(--green) 6%, white); }
+.result-box.impostor { border-color: color-mix(in srgb, var(--red) 50%, white); background: color-mix(in srgb, var(--red) 5%, white); }
+.result-head { font-size: 26px; font-weight: 800; letter-spacing: -.03em; }
+.result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; }
+.result-word { font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin-top: 4px; }
+@media (max-width: 560px) { .result-grid { grid-template-columns: 1fr; } }
+.scoreboard { border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; margin-bottom: 16px; }
+.score-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); }
+.score-row:first-of-type { border-top: 0; }
+.score-row .rank { width: 20px; color: var(--muted); font-weight: 700; }
+.score-row .pts { margin-left: auto; font-weight: 800; font-size: 18px; }
+
+/* Rollen-Karte (Spieler) */
+.role-card {
+  position: relative; border-radius: 24px; min-height: 300px; padding: 26px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+  text-align: center; cursor: pointer; user-select: none; background: #111114; color: #fff; box-shadow: var(--shadow-lg); overflow: hidden;
+}
+.role-card.covered { background: repeating-linear-gradient(135deg, #18181d 0 14px, #1f1f25 14px 28px); }
+.role-card .ico { width: 40px; height: 40px; opacity: .8; }
+.role-card .rc-small { font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; opacity: .7; margin-top: 10px; }
+.role-card .rc-word { font-size: clamp(34px, 9vw, 52px); font-weight: 800; letter-spacing: -.03em; line-height: 1.05; margin: 8px 0; word-break: break-word; }
+.role-card .rc-sub { opacity: .75; font-weight: 500; }
+.role-card.crew { background: #fff; color: var(--text); border: 2px solid var(--text); }
+.role-card.impostor { background: linear-gradient(160deg, #E63946, #a4161a); }
+.role-card .rc-tip { margin-top: 14px; background: rgba(255,255,255,.16); border-radius: 12px; padding: 10px 14px; font-weight: 700; }
+.rule { margin-top: 14px; font-size: 14.5px; background: var(--soft); border-radius: 14px; padding: 12px 14px; color: #3a3a44; }
+
+/* Eingebettete Spieler-Ansicht */
+body.embed .topbar { display: none; }
+body.embed .wrap { padding: 16px 14px 40px; }
+/* Untere Leiste darf darunterliegende Elemente nicht blockieren */
+html { scroll-padding-bottom: 120px; scroll-padding-top: 80px; }
+.actionbar { pointer-events: none; }
+.actionbar-inner > * { pointer-events: auto; }
+@media (min-width: 1100px) { body.playing .topbar-inner, body.playing .pane-tabs { max-width: 1480px; } }
+.play-toggle { white-space: nowrap; }
+@media (max-width: 640px) { #modePill { display: none !important; } }
