@@ -2,143 +2,252 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Wer würde am ehesten – Host</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Votum – Wer würde am ehesten?</title>
+  <meta name="description" content="Anonyme Live-Abstimmung für eure Gruppe: QR-Code scannen, abstimmen, Kreisdiagramm." />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icon-180.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Votum" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<div class="wrap">
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="logo" href="/" id="logo"><span id="logoMark"></span>votum</a>
+    <span class="pill hidden" id="modePill"></span>
+    <span class="grow"></span>
+    <button class="ghost small" id="navArchive">📚 Archiv</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ STARTSEITE ============ -->
+  <section id="home" class="view">
+    <div class="hero">
+      <div class="eyebrow" style="color:var(--muted)">Das Partyspiel für eure Runde</div>
+      <h1>Wer würde am ehesten …?<br><span class="hl">Abstimmen. Anonym. Live.</span></h1>
+      <p class="sub">Du startest das Spiel, alle scannen den QR-Code und stimmen am Handy ab. Niemand sieht, wer wen gewählt hat.</p>
+    </div>
+
+    <div class="mode-grid">
+      <button class="mode-card c-host" data-mode="host">
+        <div class="icon">🎤</div>
+        <h3>Klassisch</h3>
+        <p>Du stellst die Fragen. Alle stimmen ab, wer am ehesten … – danach gibt’s das Kreisdiagramm.</p>
+        <span class="go">Spiel einrichten →</span>
+      </button>
+      <button class="mode-card c-open" data-mode="open">
+        <div class="icon">✍️</div>
+        <h3>Fragen-Mix</h3>
+        <p>Jeder tippt in der Lobby anonym eigene Fragen ein. Du nimmst so viele ins Spiel, wie du willst.</p>
+        <span class="go">Spiel einrichten →</span>
+      </button>
+      <button class="mode-card c-said" data-mode="said">
+        <span class="new">NEU</span>
+        <div class="icon">🕵️</div>
+        <h3>Wer hat’s gesagt?</h3>
+        <p>Jeder beantwortet eine Meinungsfrage. 1–4 Aussagen werden gezogen – ihr diskutiert und ratet, von wem sie sind.</p>
+        <span class="go">Spiel einrichten →</span>
+      </button>
+    </div>
+
+    <div class="how">
+      <div><span class="n">1</span><b>Einrichten</b><span class="muted">Überschrift, Namen und Fragen – alles bleibt für nächstes Mal gespeichert.</span></div>
+      <div><span class="n">2</span><b>QR-Code scannen</b><span class="muted">Alle treten mit dem Handy bei – ohne App, ohne Anmeldung.</span></div>
+      <div><span class="n">3</span><b>Abstimmen &amp; lachen</b><span class="muted">Anonyme Stimmen, Kreisdiagramm und wer wie oft gewählt wurde.</span></div>
+    </div>
+  </section>
 
   <!-- ============ EINRICHTUNG ============ -->
-  <section id="setup">
-    <h1>Anonyme Abstimmung 🗳️</h1>
-    <p class="sub">Richte das Spiel ein, starte die Lobby – alle scannen den QR-Code und stimmen anonym ab.</p>
+  <section id="setup" class="view hidden">
+    <button class="back" id="backHome">← Anderen Modus wählen</button>
+    <div class="eyebrow" id="setupEyebrow"></div>
+    <h1 style="font-size:clamp(28px,5vw,42px)">Spiel einrichten</h1>
+    <p class="sub" id="setupSub"></p>
 
     <div class="card">
-      <h2>1. Überschrift</h2>
+      <div class="card-head"><span class="step">1</span><h2>Überschrift</h2></div>
       <input type="text" id="title" maxlength="120" placeholder="z. B. Mannschaftsabend 2026 🍻" />
     </div>
 
     <div class="card">
-      <h2>2. Spielmodus</h2>
-      <div class="modes">
-        <label class="mode"><input type="radio" name="mode" value="host" />
-          <span><b>🎤 Ich stelle die Fragen</b><br><span class="muted">Du wählst vorher alle Fragen aus.</span></span></label>
-        <label class="mode"><input type="radio" name="mode" value="open" />
-          <span><b>✍️ Alle reichen Fragen ein</b><br><span class="muted">Jeder tippt in der Lobby eigene Fragen ein (anonym). Du nimmst davon so viele ins Spiel, wie du willst – plus beliebig viele Vorschläge.</span></span></label>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>3. Antwortmöglichkeiten (Namen) <small id="nameCount"></small></h2>
+      <div class="card-head"><span class="step">2</span><h2>Namen <small id="nameCount"></small></h2></div>
+      <p class="hint">Die Antwortmöglichkeiten – jeder Name bekommt eine eigene Farbe.</p>
       <form id="nameForm" class="row">
         <input type="text" id="nameInput" maxlength="40" placeholder="Name eingeben und Enter drücken" autocomplete="off" />
         <button type="submit">Hinzufügen</button>
       </form>
       <div class="toolbar">
         <button type="button" class="ghost small" id="pasteNames">Mehrere auf einmal einfügen</button>
-        <button type="button" class="ghost small" id="clearNames">Alle Namen löschen</button>
+        <button type="button" class="ghost small" id="clearNames">Alle löschen</button>
       </div>
       <div id="chips" class="chips"></div>
     </div>
 
+    <div class="card hidden" id="saidSettings">
+      <div class="card-head"><span class="step">3</span><h2>Aussagen pro Runde</h2></div>
+      <p class="hint">Wie viele Aussagen sollen nach dem Schreiben zufällig gezogen und erraten werden?</p>
+      <div class="segmented" id="perRound">
+        <button type="button" data-n="1">1</button><button type="button" data-n="2">2</button><button type="button" data-n="3">3</button><button type="button" data-n="4">4</button>
+      </div>
+    </div>
+
     <div id="setupPickerSlot">
-      <!-- Fragen-Auswahl (wird im Modus "Alle reichen Fragen ein" in die Lobby verschoben) -->
+      <!-- Fragen-Auswahl (im Modus "Fragen-Mix" wandert sie in die Lobby) -->
       <div class="card" id="qCard">
-        <h2><span id="qStep">4. </span>Fragen <small id="qCount"></small></h2>
-        <p class="muted hidden" id="openHint" style="margin-top:0">Optional: Du kannst schon Fragen vorauswählen. In der Lobby kommen die Fragen der Spieler dazu, und du kannst weiter auswählen.</p>
+        <div class="card-head"><span class="step" id="qStep">3</span><h2 id="qTitle">Fragen</h2><small id="qCount"></small></div>
+        <p class="hint" id="qHint"></p>
         <form id="qForm" class="row">
-          <input type="text" id="qInput" maxlength="200" placeholder="Eigene Frage eintippen, z. B. Wer würde am ehesten …?" autocomplete="off" />
+          <input type="text" id="qInput" maxlength="200" autocomplete="off" />
           <button type="submit">Hinzufügen</button>
         </form>
         <div class="toolbar">
-          <button type="button" class="small" id="openArchive">📚 Archiv</button>
+          <button type="button" class="small accent" id="openArchive">📚 Aus dem Archiv</button>
           <button type="button" class="ghost small" id="random10">🎲 10 zufällige</button>
-          <button type="button" class="ghost small" id="shuffleSel">Reihenfolge mischen</button>
+          <button type="button" class="ghost small" id="shuffleSel">🔀 Mischen</button>
           <button type="button" class="ghost small" id="clearSel">Auswahl leeren</button>
         </div>
 
-        <div class="spacer"></div>
         <h3 class="mini">Im Spiel <span id="selCount"></span></h3>
-        <p class="muted" id="noSelected" style="margin:0">Noch keine Frage ausgewählt – tippe unten auf Vorschläge, hol dir welche aus dem Archiv oder tipp eigene ein.</p>
+        <div class="empty" id="noSelected">Noch nichts ausgewählt – tippe unten auf Vorschläge, hol dir welche aus dem Archiv oder tipp eigene ein.</div>
         <ul id="selectedList" class="q-list selected-list"></ul>
 
-        <div class="spacer"></div>
         <h3 class="mini">Vorschläge</h3>
-        <input type="text" id="qSearch" placeholder="🔍 Fragen durchsuchen …" autocomplete="off" />
+        <input type="text" id="qSearch" placeholder="🔍 Durchsuchen …" autocomplete="off" />
         <div class="cat-chips" id="catChips"></div>
-        <div class="toolbar" id="catTools"></div>
+        <div class="toolbar" id="catTools" style="margin-top:6px"></div>
         <ul id="suggestList" class="q-list"></ul>
       </div>
     </div>
 
-    <button class="big" id="startLobby">Lobby starten</button>
-    <p class="err" id="setupErr"></p>
+    <div class="actionbar" id="setupBar">
+      <div class="actionbar-inner">
+        <p class="err" id="setupErr" style="flex:1"></p>
+        <button class="accent" id="startLobby" style="padding:16px 28px;font-size:17px">Lobby starten →</button>
+      </div>
+    </div>
   </section>
 
   <!-- ============ SPIEL ============ -->
-  <section id="game" class="hidden">
-    <h1 id="gTitle"></h1>
-    <p class="sub" id="gSub"></p>
+  <section id="game" class="view hidden">
+    <div class="eyebrow" id="gEyebrow"></div>
+    <h1 id="gTitle" style="font-size:clamp(26px,4.5vw,40px)"></h1>
+    <div class="spacer"></div>
 
     <!-- Lobby -->
     <div id="vLobby" class="hidden">
       <div class="card">
         <div class="lobby">
-          <div class="qr"><img id="qrImg" alt="QR-Code zum Beitreten" /></div>
+          <div class="qr" id="qrBox" title="Groß anzeigen"><img id="qrImg" alt="QR-Code zum Beitreten" /></div>
           <div>
-            <div class="q-head">QR-Code scannen zum Mitmachen</div>
-            <div class="muted" style="margin-top:8px">oder Code eingeben:</div>
+            <div class="eyebrow">QR-Code scannen zum Mitmachen</div>
+            <div class="muted" style="margin-top:10px">oder auf <b id="lobbyHost"></b> den Code eingeben:</div>
             <div class="code" id="lobbyCode"></div>
-            <div class="link" id="lobbyLink"></div>
-            <div class="spacer"></div>
-            <div class="row" style="gap:28px">
+            <div class="stats">
               <div><div class="big-num" id="lobbyPlayers">0</div><div class="muted">Spieler</div></div>
-              <div><div class="big-num" id="lobbyQs">0</div><div class="muted">Fragen im Spiel</div></div>
+              <div><div class="big-num" id="lobbyQs">0</div><div class="muted" id="lobbyQsLabel">Fragen</div></div>
             </div>
-            <div class="spacer"></div>
-            <button class="big" id="startGame">Spiel starten ▶</button>
+            <button class="big accent" id="startGame">Spiel starten ▶</button>
             <p class="err" id="lobbyErr"></p>
           </div>
         </div>
       </div>
 
+      <div class="card hidden" id="claimCard">
+        <h2>Wer ist schon dabei?</h2>
+        <p class="hint">Bei „Wer hat’s gesagt?“ wählt jeder auf dem Handy seinen Namen – nur so kann am Ende aufgelöst werden.</p>
+        <div class="players-row" id="claimRow"></div>
+      </div>
+
       <div class="card hidden" id="subCard">
-        <h2>✍️ Eingereichte Fragen <small id="subCount"></small></h2>
-        <p class="muted" id="noSubs" style="margin:0">Noch nichts eingereicht – die Spieler können in der Lobby auf ihrem Handy Fragen eintippen.</p>
-        <div class="toolbar"><button class="ghost small hidden" id="takeAllSubs">Alle übernehmen</button></div>
+        <div class="card-head"><h2>✍️ Eingereichte Fragen <small id="subCount"></small></h2>
+          <button class="ghost small hidden" id="takeAllSubs">Alle übernehmen</button></div>
+        <div class="empty" id="noSubs">Noch nichts eingereicht – die Spieler tippen ihre Fragen auf dem Handy ein.</div>
         <ul class="q-list" id="subList"></ul>
       </div>
 
       <div id="lobbyPickerSlot"></div>
     </div>
 
-    <!-- Abstimmung -->
-    <div id="vVoting" class="card hidden">
+    <!-- Klassisch / Fragen-Mix: Abstimmung -->
+    <div id="vVoting" class="card stage hidden">
       <div class="q-head" id="vqHead"></div>
       <div class="q-big" id="vqText"></div>
-      <div class="row" style="justify-content:space-between">
-        <strong id="vqVoted"></strong>
-        <span class="muted">Spielcode: <b id="vqCode"></b></span>
-      </div>
+      <div class="row" style="justify-content:space-between"><strong id="vqVoted"></strong><span class="muted">Code <b id="vqCode"></b></span></div>
       <div class="progress"><div id="vqBar" style="width:0"></div></div>
       <div class="vote-grid" id="vqOptions"></div>
       <div class="spacer"></div>
-      <button class="big" id="reveal">Ergebnis zeigen</button>
+      <button class="big accent" id="reveal">Ergebnis zeigen</button>
     </div>
 
-    <!-- Ergebnis -->
-    <div id="vResults" class="card hidden">
+    <!-- Klassisch / Fragen-Mix: Ergebnis -->
+    <div id="vResults" class="card stage hidden">
       <div class="q-head" id="rqHead"></div>
       <div class="q-big" id="rqText"></div>
       <div id="rqResults"></div>
       <div class="spacer"></div>
-      <button class="big" id="next">Nächste Frage ▶</button>
+      <button class="big accent" id="next">Nächste Frage ▶</button>
+    </div>
+
+    <!-- Wer hat's gesagt: Schreiben -->
+    <div id="vWriting" class="card stage hidden">
+      <div class="q-head" id="wHead"></div>
+      <div class="q-big">Alle schreiben jetzt ihre Meinung ✍️</div>
+      <p class="muted" style="margin-top:-8px">Jeder hat auf dem Handy eine eigene Frage bekommen. Danach werden <b id="wPer"></b> zufällig gezogen.</p>
+      <div class="row" style="justify-content:space-between"><strong id="wCount"></strong><span class="muted">Code <b id="wCode"></b></span></div>
+      <div class="progress"><div id="wBar" style="width:0"></div></div>
+      <div class="players-row" id="wRow"></div>
+      <div class="spacer"></div>
+      <button class="big accent" id="drawBtn">Aussagen ziehen 🎲</button>
+      <p class="err" id="wErr"></p>
+    </div>
+
+    <!-- Wer hat's gesagt: Raten -->
+    <div id="vGuess" class="card stage hidden">
+      <div class="q-head" id="gHead"></div>
+      <div id="gQuote" style="margin-top:8px"></div>
+      <div class="row" style="justify-content:space-between"><strong id="gVoted"></strong><span class="muted">Diskutiert – wer war’s?</span></div>
+      <div class="progress"><div id="gBar" style="width:0"></div></div>
+      <div class="vote-grid" id="gOptions"></div>
+      <div class="spacer"></div>
+      <button class="big accent" id="solveBtn">Auflösen 🔍</button>
+    </div>
+
+    <!-- Wer hat's gesagt: Auflösung -->
+    <div id="vReveal" class="card stage hidden">
+      <div class="q-head" id="xHead"></div>
+      <div id="xQuote" style="margin-top:8px"></div>
+      <div id="xReveal"></div>
+      <div id="xResults"></div>
+      <div class="spacer"></div>
+      <button class="big accent" id="xNext"></button>
+    </div>
+
+    <!-- Wer hat's gesagt: Rundenende -->
+    <div id="vRoundEnd" class="card stage hidden">
+      <div class="q-head" id="reHead"></div>
+      <div class="q-big">Runde geschafft 🎉</div>
+      <div id="reRecap"></div>
+      <div class="spacer"></div>
+      <div class="row">
+        <button class="big accent" id="nextRound" style="flex:2">Nächste Runde ▶</button>
+        <button class="big ghost" id="finishBtn" style="flex:1">Spiel beenden</button>
+      </div>
+      <p class="err" id="reErr"></p>
     </div>
 
     <!-- Ende -->
     <div id="vEnd" class="card hidden">
-      <h2>🏁 Alle Ergebnisse</h2>
+      <div class="eyebrow">Spiel vorbei</div>
+      <h2 style="font-size:30px">🏁 Alle Ergebnisse</h2>
       <div id="endSummary"></div>
     </div>
 
@@ -147,25 +256,29 @@
       <button class="ghost small" id="newGame">Neues Spiel einrichten</button>
     </div>
   </section>
-</div>
+</main>
 
 <!-- ============ ARCHIV ============ -->
 <div class="overlay hidden" id="archive">
   <div class="sheet">
     <div class="sheet-head">
-      <button class="ghost small hidden" id="arBack">← Sessions</button>
+      <button class="ghost small hidden" id="arBack">←</button>
       <h2 id="arTitle" style="margin:0;flex:1">📚 Archiv</h2>
-      <button class="ghost small" id="arClose">✕</button>
+      <button class="ghost small icon-btn" id="arClose">✕</button>
     </div>
     <div id="arBody"></div>
   </div>
 </div>
+
+<!-- QR groß -->
+<div class="qr-full hidden" id="qrFull"><div><img id="qrFullImg" alt="QR-Code" /><div class="code" id="qrFullCode"></div></div></div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="common.js"></script>
 <script src="questions.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
+$('logoMark').innerHTML = LOGO_SVG;
 
 // ---------- Lokaler Speicher ----------
 const store = {
@@ -173,16 +286,53 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
   del(k) { try { localStorage.removeItem(k); } catch {} },
 };
-let cfg = Object.assign({ title: '', mode: 'host', names: [], custom: [], selected: [] }, store.get('umfrage-setup', {}));
+let cfg = Object.assign(
+  { title: '', mode: 'host', names: [], custom: [], selected: [], saidCustom: [], saidSelected: [], perRound: 2 },
+  store.get('umfrage-setup', {})
+);
 const save = () => store.set('umfrage-setup', cfg);
 
+// ---------- Ansichten ----------
+function show(id) {
+  for (const v of ['home', 'setup', 'game']) $(v).classList.toggle('hidden', v !== id);
+  const mode = id === 'home' ? null : id === 'game' && state ? state.mode : cfg.mode;
+  document.body.className = mode ? `m-${mode}` : '';
+  $('modePill').classList.toggle('hidden', !mode);
+  if (mode) $('modePill').textContent = `${MODES[mode].emoji} ${MODES[mode].name}`;
+  window.scrollTo(0, 0);
+}
+$('logo').onclick = (e) => { if (!session) { e.preventDefault(); show('home'); } };
+
+for (const b of document.querySelectorAll('.mode-card')) {
+  b.onclick = () => { cfg.mode = b.dataset.mode; save(); renderSetup(); show('setup'); };
+}
+$('backHome').onclick = () => show('home');
+
+const MODE_TEXT = {
+  host: 'Du stellst die Fragen. Alle stimmen anonym ab, wer am ehesten …',
+  open: 'Alle reichen in der Lobby anonym Fragen ein. Du nimmst so viele ins Spiel, wie du willst – plus Vorschläge.',
+  said: 'Jeder bekommt eine Meinungsfrage und schreibt seine Antwort. Zufällig gezogene Aussagen werden zitiert – die Gruppe rät, von wem sie sind.',
+};
+function renderSetup() {
+  $('setupEyebrow').textContent = `${MODES[cfg.mode].emoji} ${MODES[cfg.mode].name}`;
+  $('setupSub').textContent = MODE_TEXT[cfg.mode];
+  $('saidSettings').classList.toggle('hidden', cfg.mode !== 'said');
+  for (const b of $('perRound').children) b.classList.toggle('on', +b.dataset.n === cfg.perRound);
+  activeCat = null;
+  renderPicker();
+}
+$('perRound').onclick = (e) => {
+  const b = e.target.closest('[data-n]'); if (!b) return;
+  cfg.perRound = +b.dataset.n; save(); renderSetup();
+};
+
 // ---------- Archiv: jede eingetippte Frage, nach Session ----------
-// [{ id, title, date, questions: [{ t, src: 'host' | 'spieler' }] }]
+// [{ id, title, mode, date, questions: [{ t, src: 'host' | 'spieler' }] }]
 let archive = store.get('umfrage-archiv', []);
 const saveArchive = () => store.set('umfrage-archiv', archive);
-function archiveSession(id, title) {
+function archiveSession(id, title, mode) {
   let s = archive.find((x) => x.id === id);
-  if (!s) { s = { id, title: title || 'Ohne Titel', date: Date.now(), questions: [] }; archive.unshift(s); saveArchive(); }
+  if (!s) { s = { id, title: title || 'Ohne Titel', mode, date: Date.now(), questions: [] }; archive.unshift(s); saveArchive(); }
   return s;
 }
 function archiveAdd(id, text, src) {
@@ -217,30 +367,31 @@ $('pasteNames').onclick = () => {
 };
 $('clearNames').onclick = () => { if (cfg.names.length && confirm('Alle Namen löschen?')) { cfg.names = []; save(); renderNames(); } };
 
-// ---------- Modus ----------
-function renderMode() {
-  for (const r of document.querySelectorAll('input[name=mode]')) r.checked = r.value === cfg.mode;
-  $('openHint').classList.toggle('hidden', cfg.mode !== 'open');
-}
-for (const r of document.querySelectorAll('input[name=mode]')) r.onchange = () => { cfg.mode = r.value; save(); renderMode(); };
-
 // ---------- Fragen-Auswahl (Setup + Lobby) ----------
-let pickTarget = 'setup'; // 'setup' -> cfg.selected | 'lobby' -> Fragen des laufenden Spiels
+let pickTarget = 'setup'; // 'setup' -> gespeicherte Auswahl | 'lobby' -> Fragen des laufenden Spiels
 let lobbyQs = [];
-let activeCat = CATEGORIES[0].id;
+let activeCat = null;
 const lc = (s) => s.toLowerCase();
 
-const pickList = () => (pickTarget === 'lobby' ? lobbyQs : cfg.selected);
+function pool() {
+  const mode = pickTarget === 'lobby' && state ? state.mode : cfg.mode;
+  return mode === 'said'
+    ? { cats: PROMPT_CATEGORIES, all: PROMPTS, sel: 'saidSelected', custom: 'saidCustom', said: true }
+    : { cats: CATEGORIES, all: SUGGESTIONS, sel: 'selected', custom: 'custom', said: false };
+}
+const customs = () => cfg[pool().custom];
+const pickList = () => (pickTarget === 'lobby' ? lobbyQs : cfg[pool().sel]);
 function setPickList(list) {
   if (pickTarget === 'lobby') {
     lobbyQs = list;
     if (session) socket.emit('host:questions', { ...session, questions: list });
     renderLobbyExtras();
   } else {
-    cfg.selected = list;
+    cfg[pool().sel] = list;
     save();
   }
   renderPicker();
+  if (!$('archive').classList.contains('hidden')) renderArchive();
 }
 const isPicked = (q) => pickList().some((x) => lc(x) === lc(q));
 function togglePick(q) {
@@ -253,19 +404,28 @@ function addPicks(qs) {
 }
 
 function renderPicker() {
+  const P = pool();
   const list = pickList();
+  $('qTitle').textContent = P.said ? 'Meinungsfragen' : 'Fragen';
+  $('qStep').textContent = cfg.mode === 'said' ? '4' : '3';
+  $('qStep').classList.toggle('hidden', pickTarget === 'lobby');
+  $('qInput').placeholder = P.said ? 'Eigene Meinungsfrage, z. B. Was hältst du von …?' : 'Eigene Frage, z. B. Wer würde am ehesten …?';
+  $('qHint').textContent = pickTarget === 'lobby'
+    ? 'Nimm so viele Fragen ins Spiel, wie du willst – aus den Einsendungen, den Vorschlägen oder dem Archiv.'
+    : P.said ? 'Aus diesen Fragen bekommt jeder Spieler pro Runde zufällig eine eigene. Je mehr, desto abwechslungsreicher.'
+    : cfg.mode === 'open' ? 'Optional: Du kannst schon vorauswählen. In der Lobby kommen die Fragen der Spieler dazu.'
+    : 'Wähle die Fragen für dieses Spiel – sie kommen in dieser Reihenfolge dran.';
   $('selectedList').innerHTML = list
     .map((q, i) => `<li class="q-item on"><span class="q-text">${esc(q)}</span>
-      <button class="ghost small" data-up="${i}" ${i === 0 ? 'disabled' : ''} title="Nach oben">↑</button>
-      <button class="ghost small" data-rm="${i}" title="Rausnehmen">✕</button></li>`)
+      <button class="ghost small icon-btn" data-up="${i}" ${i === 0 ? 'disabled' : ''} title="Nach oben">↑</button>
+      <button class="ghost small icon-btn" data-rm="${i}" title="Rausnehmen">✕</button></li>`)
     .join('');
   $('noSelected').classList.toggle('hidden', list.length > 0);
-  $('qCount').textContent = list.length ? `(${list.length} im Spiel)` : '';
+  $('qCount').textContent = list.length ? `${list.length} im Spiel` : '';
   $('selCount').textContent = list.length ? `(${list.length})` : '';
 
-  // Kategorie-Chips
-  const cats = [...(cfg.custom.length ? [{ id: 'own', name: 'Eigene', emoji: '✏️', questions: cfg.custom }] : []), ...CATEGORIES];
-  if (!cats.some((c) => c.id === activeCat)) activeCat = CATEGORIES[0].id;
+  const cats = [...(customs().length ? [{ id: 'own', name: 'Eigene', emoji: '✏️', questions: customs() }] : []), ...P.cats];
+  if (!cats.some((c) => c.id === activeCat)) activeCat = P.cats[0].id;
   const search = lc($('qSearch').value.trim());
   $('catChips').innerHTML = cats
     .map((c) => {
@@ -275,25 +435,19 @@ function renderPicker() {
     .join('');
 
   let shown, cat = null;
-  if (search) {
-    shown = [...new Set([...cfg.custom, ...SUGGESTIONS])].filter((q) => lc(q).includes(search));
-  } else {
-    cat = cats.find((c) => c.id === activeCat);
-    shown = cat.questions;
-  }
+  if (search) shown = [...new Set([...customs(), ...P.all])].filter((q) => lc(q).includes(search));
+  else { cat = cats.find((c) => c.id === activeCat); shown = cat.questions; }
   $('catTools').innerHTML = cat
-    ? `<button type="button" class="ghost small" id="catAll">Alle aus „${esc(cat.name)}“ übernehmen</button>`
+    ? `<button type="button" class="ghost small" id="catAll">＋ Alle aus „${esc(cat.name)}“</button>`
     : `<span class="muted">${shown.length} Treffer</span>`;
   $('suggestList').innerHTML = shown
     .map((q) => {
-      const on = isPicked(q), own = cfg.custom.includes(q);
-      return `<li class="q-item${on ? ' on' : ''}" data-q="${esc(q)}">
-        <input type="checkbox" ${on ? 'checked' : ''} tabindex="-1" />
+      const on = isPicked(q), own = customs().includes(q);
+      return `<li class="q-item${on ? ' on' : ''}" data-q="${esc(q)}"><span class="box"></span>
         <span class="q-text">${esc(q)}</span>
-        ${own ? '<button class="ghost small del" title="Eigene Frage löschen">🗑</button>' : ''}
-      </li>`;
+        ${own ? '<button class="ghost small icon-btn del" title="Eigene Frage löschen">🗑</button>' : ''}</li>`;
     })
-    .join('') || '<li class="muted">Keine Fragen gefunden.</li>';
+    .join('') || '<li class="empty">Keine Fragen gefunden.</li>';
 }
 
 $('catChips').onclick = (e) => {
@@ -302,16 +456,15 @@ $('catChips').onclick = (e) => {
 };
 $('catTools').onclick = (e) => {
   if (!e.target.closest('#catAll')) return;
-  const cats = [{ id: 'own', questions: cfg.custom }, ...CATEGORIES];
+  const cats = [{ id: 'own', questions: customs() }, ...pool().cats];
   addPicks(cats.find((c) => c.id === activeCat).questions);
 };
 $('qSearch').oninput = renderPicker;
 $('suggestList').onclick = (e) => {
   const li = e.target.closest('li[data-q]'); if (!li) return;
   const q = li.dataset.q;
-  if (e.target.closest('.del')) {
-    cfg.custom = cfg.custom.filter((x) => x !== q); save(); renderPicker();
-  } else togglePick(q);
+  if (e.target.closest('.del')) { cfg[pool().custom] = customs().filter((x) => x !== q); save(); renderPicker(); }
+  else togglePick(q);
 };
 $('selectedList').onclick = (e) => {
   const up = e.target.closest('[data-up]'), rm = e.target.closest('[data-rm]');
@@ -325,14 +478,14 @@ $('qForm').onsubmit = (e) => {
   e.preventDefault();
   const q = $('qInput').value.trim().slice(0, 200);
   if (!q) return;
-  if (!cfg.custom.some((x) => lc(x) === lc(q)) && !SUGGESTIONS.some((x) => lc(x) === lc(q))) cfg.custom.unshift(q);
+  if (!customs().some((x) => lc(x) === lc(q)) && !pool().all.some((x) => lc(x) === lc(q))) customs().unshift(q);
   save();
   if (pickTarget === 'lobby' && session?.archiveId) archiveAdd(session.archiveId, q, 'host');
   $('qInput').value = '';
   addPicks([q]);
 };
 const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-$('random10').onclick = () => addPicks(shuffle(SUGGESTIONS.filter((q) => !isPicked(q))).slice(0, 10));
+$('random10').onclick = () => addPicks(shuffle(pool().all.filter((q) => !isPicked(q))).slice(0, 10));
 $('shuffleSel').onclick = () => setPickList(shuffle(pickList().slice()));
 $('clearSel').onclick = () => { if (!pickList().length || confirm('Alle ausgewählten Fragen rausnehmen?')) setPickList([]); };
 
@@ -347,25 +500,31 @@ function renderArchive() {
     $('arTitle').textContent = '📚 Archiv';
     const list = archive.filter((x) => x.questions.length);
     $('arBody').innerHTML = list.length
-      ? `<p class="muted" style="margin-top:0">Wähle eine Session aus, um Fragen daraus zu übernehmen.</p><ul class="q-list">${list
-          .map((x) => `<li class="q-item session" data-s="${esc(x.id)}"><span class="q-text"><b>${esc(x.title)}</b><br><span class="muted">${fmtDate(x.date)} · ${x.questions.length} ${x.questions.length === 1 ? 'Frage' : 'Fragen'}</span></span><span class="chev">›</span></li>`)
+      ? `<p class="muted" style="margin-top:0">Wähle eine Session, um Fragen daraus zu übernehmen.</p><ul class="q-list">${list
+          .map((x) => `<li class="q-item session" data-s="${esc(x.id)}"><span style="font-size:24px">${MODES[x.mode]?.emoji || '🗳️'}</span><span class="q-text"><b>${esc(x.title)}</b><br><span class="muted">${fmtDate(x.date)} · ${x.questions.length} ${x.questions.length === 1 ? 'Frage' : 'Fragen'}</span></span><span class="chev">›</span></li>`)
           .join('')}</ul>`
-      : '<p class="muted">Noch leer. Jede Frage, die du oder die Spieler eintippen, landet hier automatisch – sortiert nach Session.</p>';
+      : '<div class="empty">Noch leer. Jede Frage, die du oder die Spieler eintippen, landet hier automatisch – sortiert nach Session.</div>';
     return;
   }
   $('arTitle').textContent = s.title;
   const all = s.questions.every((q) => isPicked(q.t));
   $('arBody').innerHTML = `<p class="muted" style="margin-top:0">${fmtDate(s.date)} · Tippe auf eine Frage, um sie ins Spiel zu nehmen.</p>
     <div class="toolbar" style="margin-bottom:10px">
-      <button class="small" id="arAll" ${all ? 'disabled' : ''}>Alle übernehmen</button>
+      <button class="small accent" id="arAll" ${all ? 'disabled' : ''}>Alle übernehmen</button>
       <button class="ghost small" id="arDel">Session löschen</button>
     </div>
     <ul class="q-list">${s.questions
-      .map((q, i) => `<li class="q-item${isPicked(q.t) ? ' on' : ''}" data-i="${i}"><input type="checkbox" ${isPicked(q.t) ? 'checked' : ''} tabindex="-1" />
+      .map((q, i) => `<li class="q-item${isPicked(q.t) ? ' on' : ''}" data-i="${i}"><span class="box"></span>
         <span class="q-text">${esc(q.t)}</span><span class="tag">${q.src === 'spieler' ? 'Spieler' : 'Host'}</span></li>`)
       .join('')}</ul>`;
 }
-$('openArchive').onclick = () => { arView = null; renderArchive(); $('archive').classList.remove('hidden'); };
+function openArchive() { arView = null; renderArchive(); $('archive').classList.remove('hidden'); }
+$('openArchive').onclick = openArchive;
+$('navArchive').onclick = () => {
+  // Von der Startseite aus: in die Einrichtung wechseln, damit übernommene Fragen sichtbar sind
+  if (!$('home').classList.contains('hidden')) { renderSetup(); show('setup'); }
+  openArchive();
+};
 $('arClose').onclick = () => $('archive').classList.add('hidden');
 $('archive').onclick = (e) => { if (e.target === $('archive')) $('archive').classList.add('hidden'); };
 $('arBack').onclick = () => { arView = null; renderArchive(); };
@@ -373,7 +532,7 @@ $('arBody').onclick = (e) => {
   const sess = e.target.closest('[data-s]');
   if (sess) { arView = sess.dataset.s; return renderArchive(); }
   const s = archive.find((x) => x.id === arView); if (!s) return;
-  if (e.target.closest('#arAll')) addPicks(s.questions.map((q) => q.t));
+  if (e.target.closest('#arAll')) { addPicks(s.questions.map((q) => q.t)); toast('Fragen übernommen ✓'); }
   else if (e.target.closest('#arDel')) {
     if (!confirm(`Session „${s.title}“ aus dem Archiv löschen?`)) return;
     archive = archive.filter((x) => x !== s); saveArchive(); arView = null;
@@ -386,55 +545,60 @@ $('arBody').onclick = (e) => {
 
 $('title').value = cfg.title;
 $('title').oninput = () => { cfg.title = $('title').value; save(); };
-renderNames(); renderMode(); renderPicker();
+renderNames(); renderSetup();
 
 // ---------- Spiel ----------
 const socket = io();
 let session = store.get('umfrage-host', null); // { code, token, archiveId }
 let state = null;
 let submissions = [];
+let qrFor = null;
 
 const joinUrl = (code) => `${location.origin}/play.html?r=${code}`;
 
 $('startLobby').onclick = () => {
   $('setupErr').textContent = '';
+  const qs = cfg[pool().sel];
   if (cfg.names.length < 2) return ($('setupErr').textContent = 'Bitte mindestens 2 Namen eintragen.');
-  if (cfg.mode === 'host' && !cfg.selected.length) return ($('setupErr').textContent = 'Bitte mindestens 1 Frage auswählen.');
-  const payload = { title: cfg.title, mode: cfg.mode, options: cfg.names, questions: cfg.selected };
+  if (cfg.mode !== 'open' && !qs.length) return ($('setupErr').textContent = 'Bitte mindestens 1 Frage auswählen.');
+  const payload = { title: cfg.title, mode: cfg.mode, options: cfg.names, questions: qs, perRound: cfg.perRound };
   socket.emit('host:create', payload, (res) => {
     if (res.error) return ($('setupErr').textContent = res.error);
     session = { code: res.code, token: res.token, archiveId: `${res.code}-${Date.now()}` };
     store.set('umfrage-host', session);
     // Archiv: selbst eingetippte Fragen dieser Session speichern
-    archiveSession(session.archiveId, res.state.title);
-    for (const q of cfg.selected) if (cfg.custom.includes(q)) archiveAdd(session.archiveId, q, 'host');
+    archiveSession(session.archiveId, res.state.title, cfg.mode);
+    for (const q of qs) if (customs().includes(q)) archiveAdd(session.archiveId, q, 'host');
     handleInfo(res.info);
     showGame(res.state);
   });
 };
 
-const send = (ev, cb) => session && socket.emit(ev, session, cb);
-$('startGame').onclick = () => {
-  $('lobbyErr').textContent = '';
-  send('host:next', (res) => { if (res?.error) $('lobbyErr').textContent = res.error; });
-};
-$('next').onclick = () => send('host:next');
+const send = (ev, extra, cb) => session && socket.emit(ev, { ...session, ...extra }, cb);
+const next = (errEl) => send('host:next', { from: state.phase }, (res) => { if (res?.error && errEl) $(errEl).textContent = res.error; });
+$('startGame').onclick = () => { $('lobbyErr').textContent = ''; next('lobbyErr'); };
+$('next').onclick = () => next();
 $('reveal').onclick = () => send('host:reveal');
+$('drawBtn').onclick = () => { $('wErr').textContent = ''; next('wErr'); };
+$('solveBtn').onclick = () => send('host:reveal');
+$('xNext').onclick = () => next();
+$('nextRound').onclick = () => { $('reErr').textContent = ''; next('reErr'); };
+$('finishBtn').onclick = () => send('host:end');
 $('endGame').onclick = () => { if (confirm('Spiel jetzt beenden und Gesamtergebnis zeigen?')) send('host:end'); };
 $('newGame').onclick = () => {
   if (state && state.phase !== 'end' && !confirm('Laufendes Spiel verlassen?')) return;
   store.del('umfrage-host'); session = null; state = null; submissions = [];
   usePicker('setup');
-  $('game').classList.add('hidden'); $('setup').classList.remove('hidden');
-  window.scrollTo(0, 0);
+  renderSetup();
+  show('setup');
 };
+$('qrBox').onclick = () => $('qrFull').classList.remove('hidden');
+$('qrFull').onclick = () => $('qrFull').classList.add('hidden');
 
 // Fragen-Auswahl zwischen Setup und Lobby verschieben
 function usePicker(where) {
   pickTarget = where;
   (where === 'lobby' ? $('lobbyPickerSlot') : $('setupPickerSlot')).appendChild($('qCard'));
-  $('qStep').textContent = where === 'lobby' ? '' : '4. ';
-  $('openHint').classList.toggle('hidden', where === 'lobby' || cfg.mode !== 'open');
   renderPicker();
 }
 
@@ -453,7 +617,7 @@ function handleInfo(info) {
   lobbyQs = info.questions;
   submissions = info.submissions;
   if (session?.archiveId) {
-    archiveSession(session.archiveId, state?.title || cfg.title);
+    archiveSession(session.archiveId, state?.title || cfg.title, state?.mode || cfg.mode);
     for (const s of submissions) archiveAdd(session.archiveId, s.text, 'spieler');
   }
   if (pickTarget === 'lobby') renderPicker();
@@ -469,7 +633,7 @@ function renderLobbyExtras() {
     .slice().reverse()
     .map((s) => {
       const on = isPicked(s.text);
-      return `<li class="q-item${on ? ' on' : ''}" data-sub="${s.id}"><input type="checkbox" ${on ? 'checked' : ''} tabindex="-1" />
+      return `<li class="q-item${on ? ' on' : ''}" data-sub="${s.id}"><span class="box"></span>
         <span class="q-text">${esc(s.text)}</span><span class="tag">${on ? 'im Spiel' : 'übernehmen'}</span></li>`;
     })
     .join('');
@@ -481,55 +645,105 @@ $('subList').onclick = (e) => {
 };
 $('takeAllSubs').onclick = () => addPicks(submissions.map((s) => s.text));
 
+// Namens-Chips: farbig = vergeben/dabei, ✓ = fertig
+function playerChips(s, doneSet) {
+  return s.options
+    .map((o, i) => {
+      const inGame = s.claimed.includes(i);
+      const done = doneSet && doneSet.includes(i);
+      return `<span class="p-chip${inGame ? ' in' : ''}${done ? ' done' : ''}" style="${inGame ? `background:${colorFor(i)}` : ''}">${esc(o)}</span>`;
+    })
+    .join('');
+}
+const staticOptions = (s) => s.options.map((o, i) => `<div class="vote-btn static" style="background:${colorFor(i)}">${esc(o)}</div>`).join('');
+const pct = (a, b) => (b ? `${Math.min(100, (a / b) * 100)}%` : '0');
+
 function showGame(s) {
   const prev = state;
   state = s;
-  $('setup').classList.add('hidden');
-  $('game').classList.remove('hidden');
+  if ($('game').classList.contains('hidden')) show('game');
   $('gTitle').textContent = s.title;
-  $('gSub').textContent = s.phase === 'lobby'
-    ? (s.mode === 'open' ? 'Modus: Alle reichen Fragen ein' : 'Modus: Host stellt die Fragen') + ` · ${s.options.length} Antwortmöglichkeiten`
-    : '';
-  for (const v of ['vLobby', 'vVoting', 'vResults', 'vEnd']) $(v).classList.add('hidden');
-  const head = `Frage ${s.index + 1} von ${s.totalQuestions}`;
-  const isLast = s.index + 1 >= s.totalQuestions;
-
-  if (s.phase === 'lobby') {
-    $('vLobby').classList.remove('hidden');
-    const url = joinUrl(s.code);
-    if (!prev || prev.code !== s.code) $('qrImg').src = `/qr.svg?u=${encodeURIComponent(url)}`;
-    $('lobbyCode').textContent = s.code;
-    $('lobbyLink').textContent = url;
-    $('lobbyPlayers').textContent = s.players;
-    $('subCard').classList.toggle('hidden', s.mode !== 'open');
-    if (s.mode === 'open' && pickTarget !== 'lobby') usePicker('lobby');
-    renderLobbyExtras();
-  } else {
-    if (pickTarget === 'lobby') usePicker('setup');
+  $('gEyebrow').textContent = `${MODES[s.mode].emoji} ${MODES[s.mode].name} · Code ${s.code}`;
+  const views = ['vLobby', 'vVoting', 'vResults', 'vWriting', 'vGuess', 'vReveal', 'vRoundEnd', 'vEnd'];
+  const phaseView = { lobby: 'vLobby', voting: 'vVoting', results: 'vResults', writing: 'vWriting', guess: 'vGuess', reveal: 'vReveal', roundEnd: 'vRoundEnd', end: 'vEnd' }[s.phase];
+  const changed = !prev || prev.phase !== s.phase || prev.voteKey !== s.voteKey;
+  for (const v of views) {
+    $(v).classList.toggle('hidden', v !== phaseView);
+    if (v === phaseView && changed) { $(v).classList.remove('view'); void $(v).offsetWidth; $(v).classList.add('view'); }
   }
-  if (s.phase === 'voting') {
-    $('vVoting').classList.remove('hidden');
-    $('vqHead').textContent = head;
-    $('vqText').textContent = s.question;
-    $('vqCode').textContent = s.code;
-    $('vqVoted').textContent = `${s.voted} von ${s.players} haben abgestimmt`;
-    $('vqBar').style.width = s.players ? `${Math.min(100, (s.voted / s.players) * 100)}%` : '0';
-    $('vqOptions').innerHTML = s.options.map((o, i) => `<div class="vote-btn center" style="background:${colorFor(i)};display:flex;align-items:center;justify-content:center">${esc(o)}</div>`).join('');
-    // Automatisch aufdecken, sobald alle abgestimmt haben
-    if (s.players > 0 && s.voted >= s.players) setTimeout(() => state === s && send('host:reveal'), 1200);
-  } else if (s.phase === 'results') {
-    $('vResults').classList.remove('hidden');
-    $('rqHead').textContent = head;
-    $('rqText').textContent = s.question;
-    $('rqResults').innerHTML = resultsHTML(s.options, s.counts);
-    $('next').textContent = isLast ? 'Gesamtergebnis 🏁' : 'Nächste Frage ▶';
-  } else if (s.phase === 'end') {
-    $('vEnd').classList.remove('hidden');
-    $('endSummary').innerHTML = s.summary.length
-      ? s.summary.map((x, i) => `<div class="summary-item"><h3>${i + 1}. ${esc(x.question)}</h3>${resultsHTML(s.options, x.counts)}</div>`).join('')
-      : '<p class="muted">Es wurde keine Frage gespielt.</p>';
-  }
+  if (s.phase !== 'lobby' && pickTarget === 'lobby') usePicker('setup');
   $('endGame').classList.toggle('hidden', s.phase === 'end');
+  const allVoted = s.players > 0 && s.voted >= s.players;
+
+  switch (s.phase) {
+    case 'lobby': {
+      const url = joinUrl(s.code);
+      if (qrFor !== s.code) {
+        qrFor = s.code;
+        $('qrImg').src = $('qrFullImg').src = `/qr.svg?u=${encodeURIComponent(url)}`;
+      }
+      $('lobbyHost').textContent = `${location.host}/play.html`;
+      $('lobbyCode').textContent = $('qrFullCode').textContent = s.code;
+      $('lobbyPlayers').textContent = s.players;
+      $('lobbyQsLabel').textContent = s.mode === 'said' ? 'Meinungsfragen' : 'Fragen im Spiel';
+      $('subCard').classList.toggle('hidden', s.mode !== 'open');
+      $('claimCard').classList.toggle('hidden', s.mode !== 'said');
+      if (s.mode === 'said') $('claimRow').innerHTML = playerChips(s);
+      if (s.mode === 'open' && pickTarget !== 'lobby') usePicker('lobby');
+      renderLobbyExtras();
+      break;
+    }
+    case 'voting':
+      $('vqHead').textContent = `Frage ${s.index + 1} von ${s.totalQuestions}`;
+      $('vqText').textContent = s.question;
+      $('vqCode').textContent = s.code;
+      $('vqVoted').textContent = `${s.voted} von ${s.players} haben abgestimmt`;
+      $('vqBar').style.width = pct(s.voted, s.players);
+      $('vqOptions').innerHTML = staticOptions(s);
+      if (allVoted) setTimeout(() => state === s && send('host:reveal'), 1200);
+      break;
+    case 'results':
+      $('rqHead').textContent = `Frage ${s.index + 1} von ${s.totalQuestions}`;
+      $('rqText').textContent = s.question;
+      if (changed) $('rqResults').innerHTML = resultsHTML(s.options, s.counts);
+      $('next').textContent = s.index + 1 >= s.totalQuestions ? 'Gesamtergebnis 🏁' : 'Nächste Frage ▶';
+      break;
+    case 'writing':
+      $('wHead').textContent = `Runde ${s.round}`;
+      $('wPer').textContent = s.perRound === 1 ? '1 Aussage' : `${s.perRound} Aussagen`;
+      $('wCode').textContent = s.code;
+      $('wCount').textContent = `${s.written} von ${s.writers} haben geschrieben`;
+      $('wBar').style.width = pct(s.written, s.writers);
+      $('wRow').innerHTML = playerChips(s, s.done);
+      $('drawBtn').disabled = !s.written;
+      if (s.writers > 0 && s.written >= s.writers) setTimeout(() => state === s && send('host:next', { from: 'writing' }), 1500);
+      break;
+    case 'guess':
+      $('gHead').textContent = `Runde ${s.round} · Aussage ${s.pickIndex + 1} von ${s.picksTotal}`;
+      $('gQuote').innerHTML = quoteHTML(s.prompt, s.quote);
+      $('gVoted').textContent = `${s.voted} von ${s.players} haben getippt`;
+      $('gBar').style.width = pct(s.voted, s.players);
+      $('gOptions').innerHTML = staticOptions(s);
+      break;
+    case 'reveal':
+      $('xHead').textContent = `Runde ${s.round} · Aussage ${s.pickIndex + 1} von ${s.picksTotal}`;
+      if (changed) {
+        $('xQuote').innerHTML = quoteHTML(s.prompt, s.quote);
+        $('xReveal').innerHTML = revealHTML(s.options, s.author, s.counts);
+        $('xResults').innerHTML = resultsHTML(s.options, s.counts);
+      }
+      $('xNext').textContent = s.pickIndex + 1 < s.picksTotal ? 'Nächste Aussage ▶' : 'Runde abschließen ▶';
+      break;
+    case 'roundEnd':
+      $('reHead').textContent = `Runde ${s.round}`;
+      $('reRecap').innerHTML = (s.roundRecap || [])
+        .map((x) => `<div class="summary-item">${quoteHTML(x.prompt, x.quote)}<div class="author-line" style="color:${colorFor(x.author)}">→ ${esc(s.options[x.author])}</div></div>`)
+        .join('');
+      break;
+    case 'end':
+      if (changed) $('endSummary').innerHTML = summaryHTML(s);
+      break;
+  }
 }
 </script>
 </body>

@@ -2,20 +2,40 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title>Mitspielen – Anonyme Abstimmung</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>Mitspielen – Votum</title>
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icon-180.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Votum" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<div class="wrap narrow">
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <span class="logo"><span id="logoMark"></span>votum</span>
+    <span class="grow"></span>
+    <span class="pill hidden" id="codePill"></span>
+  </div>
+</header>
+
+<main class="wrap narrow">
 
   <!-- Code eingeben (falls ohne QR-Code geöffnet) -->
-  <section id="vJoin" class="hidden">
-    <h1>Mitspielen 🗳️</h1>
-    <p class="sub">Gib den Spielcode ein, der beim Host angezeigt wird.</p>
+  <section id="vJoin" class="view hidden">
+    <div class="hero" style="padding-bottom:10px">
+      <h1>Mitspielen 🎉</h1>
+      <p class="sub">Gib den Code ein, der beim Host auf dem Bildschirm steht.</p>
+    </div>
     <form id="joinForm" class="card">
-      <input type="text" id="codeInput" maxlength="4" placeholder="CODE" autocomplete="off"
-             style="text-transform:uppercase;font-size:28px;text-align:center;letter-spacing:.2em" />
+      <input type="text" id="codeInput" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters"
+             style="text-transform:uppercase;font-size:34px;text-align:center;letter-spacing:.3em;font-weight:800;font-family:var(--display)" />
       <div class="spacer"></div>
       <button class="big" type="submit">Beitreten</button>
       <p class="err" id="joinErr"></p>
@@ -23,26 +43,40 @@
   </section>
 
   <section id="vGame" class="hidden">
-    <h1 id="gTitle" style="font-size:24px"></h1>
-    <p class="sub" id="gSub"></p>
+    <div class="eyebrow" id="gEyebrow"></div>
+    <h1 id="gTitle" style="font-size:28px"></h1>
+    <div class="spacer"></div>
 
-    <div id="vLobby" class="card center hidden">
-      <div style="font-size:48px">✅</div>
-      <h2>Du bist drin!</h2>
-      <p class="muted">Warte, bis der Host das Spiel startet. Deine Stimmen sind komplett anonym.</p>
-      <p><b id="lobbyPlayers"></b></p>
+    <!-- Namen wählen ("Wer hat's gesagt?") -->
+    <div id="vClaim" class="card hidden">
+      <h2>Wer bist du?</h2>
+      <p class="hint">Tippe auf deinen Namen. Keine Sorge: Deine Stimmen bleiben anonym – nur wenn deine Aussage gezogen wird, wird sie am Ende aufgelöst.</p>
+      <div class="vote-grid" id="claimGrid"></div>
+      <p class="err" id="claimErr"></p>
     </div>
 
-    <form id="subForm" class="card hidden">
-      <h2>✍️ Deine Fragen einreichen</h2>
-      <p class="muted" style="margin-top:0">Anonym – niemand sieht, von wem die Frage kommt. Mehrere Fragen? Einfach jede in eine neue Zeile.</p>
-      <textarea id="subInput" maxlength="2000" placeholder="Wer würde am ehesten …?"></textarea>
-      <div class="spacer"></div>
-      <button class="big" type="submit">Einreichen</button>
-      <p class="err" id="subErr"></p>
-      <ul class="mine" id="mine"></ul>
-    </form>
+    <!-- Lobby -->
+    <div id="vLobby" class="hidden">
+      <div class="card waiting">
+        <div class="emoji">✅</div>
+        <h2 style="margin-top:8px" id="lobbyHello">Du bist drin!</h2>
+        <p class="muted">Warte, bis der Host das Spiel startet<span class="dots"></span></p>
+        <p><b id="lobbyPlayers"></b></p>
+        <button class="ghost small hidden" id="changeName">Namen ändern</button>
+      </div>
 
+      <form id="subForm" class="card hidden">
+        <h2>✍️ Deine Fragen einreichen</h2>
+        <p class="hint">Anonym – niemand sieht, von wem die Frage kommt. Mehrere? Jede in eine neue Zeile.</p>
+        <textarea id="subInput" maxlength="2000" placeholder="Wer würde am ehesten …?"></textarea>
+        <div class="spacer"></div>
+        <button class="big accent" type="submit">Einreichen</button>
+        <p class="err" id="subErr"></p>
+        <ul class="mine" id="mine"></ul>
+      </form>
+    </div>
+
+    <!-- Abstimmen (Klassisch / Fragen-Mix) -->
     <div id="vVoting" class="hidden">
       <div class="q-head" id="vqHead"></div>
       <div class="q-big" id="vqText"></div>
@@ -50,26 +84,67 @@
       <p class="center muted" id="vqStatus" style="margin-top:16px"></p>
     </div>
 
+    <!-- Ergebnis -->
     <div id="vResults" class="hidden">
       <div class="q-head" id="rqHead"></div>
       <div class="q-big" id="rqText"></div>
       <div id="rqResults"></div>
-      <p class="center muted" style="margin-top:16px">Warte auf die nächste Frage …</p>
+      <p class="center muted" style="margin-top:18px">Warte auf die nächste Frage<span class="dots"></span></p>
     </div>
 
+    <!-- Schreiben ("Wer hat's gesagt?") -->
+    <form id="vWriting" class="hidden">
+      <div class="q-head" id="wHead"></div>
+      <div class="q-big" id="wPrompt"></div>
+      <p class="muted" style="margin-top:-8px">Schreib ehrlich deine Meinung. Wenn deine Aussage gezogen wird, muss die Gruppe erraten, dass sie von dir ist 😏</p>
+      <textarea id="wInput" maxlength="300" placeholder="Deine Meinung …"></textarea>
+      <div class="row" style="justify-content:space-between;margin:6px 0 14px"><span class="muted" id="wLen">0 / 300</span><span class="muted" id="wProgress"></span></div>
+      <button class="big accent" type="submit" id="wBtn">Abschicken</button>
+      <p class="err" id="wErr"></p>
+      <p class="center muted hidden" id="wSent" style="margin-top:14px">✅ Abgeschickt! Du kannst sie bis zur Auswahl noch ändern.</p>
+    </form>
+
+    <!-- Raten ("Wer hat's gesagt?") -->
+    <div id="vGuess" class="hidden">
+      <div class="q-head" id="gHead"></div>
+      <div class="secret hidden" id="gSecret">🤫 Das ist deine Aussage – Pokerface!</div>
+      <div id="gQuote" style="margin-top:8px"></div>
+      <p class="muted" style="margin-top:-6px">Diskutiert – wer hat das gesagt? Dann tippen:</p>
+      <div class="vote-grid" id="gOptions"></div>
+      <p class="center muted" id="gStatus" style="margin-top:16px"></p>
+    </div>
+
+    <!-- Auflösung -->
+    <div id="vReveal" class="hidden">
+      <div class="q-head" id="xHead"></div>
+      <div id="xQuote" style="margin-top:8px"></div>
+      <div id="xReveal"></div>
+      <div id="xResults"></div>
+    </div>
+
+    <!-- Rundenende -->
+    <div id="vRoundEnd" class="card waiting hidden">
+      <div class="emoji">🎉</div>
+      <h2 style="margin-top:8px">Runde geschafft!</h2>
+      <p class="muted">Gleich geht’s weiter<span class="dots"></span></p>
+    </div>
+
+    <!-- Ende -->
     <div id="vEnd" class="hidden">
-      <h2>🏁 Spiel vorbei – alle Ergebnisse</h2>
+      <div class="eyebrow">Spiel vorbei</div>
+      <h2 style="font-size:26px">🏁 Alle Ergebnisse</h2>
       <div id="endSummary"></div>
     </div>
   </section>
 
   <p class="err center" id="connErr"></p>
-</div>
+</main>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="common.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
+$('logoMark').innerHTML = LOGO_SVG;
 
 // Anonyme Geräte-ID: nur damit jeder einmal pro Frage abstimmt
 function deviceId() {
@@ -84,7 +159,9 @@ const pid = deviceId();
 const socket = io();
 let code = (new URLSearchParams(location.search).get('r') || '').toUpperCase();
 let state = null;
-let myVote = null; // { index, option }
+let me = {};           // private Infos vom Server (Name, Frage, Antwort, Stimme)
+let wantRename = false;
+let mine = [];
 
 function join() {
   socket.emit('player:join', { code, pid }, (res) => {
@@ -95,11 +172,10 @@ function join() {
       return;
     }
     history.replaceState(null, '', `?r=${code}`);
-    myVote = res.myVote != null ? { index: res.state.index, option: res.myVote } : null;
+    me = res.me;
     render(res.state);
   });
 }
-
 $('joinForm').onsubmit = (e) => {
   e.preventDefault();
   code = $('codeInput').value.trim().toUpperCase();
@@ -109,59 +185,42 @@ $('joinForm').onsubmit = (e) => {
 socket.on('connect', () => { $('connErr').textContent = ''; if (code) join(); else $('vJoin').classList.remove('hidden'); });
 socket.on('disconnect', () => { $('connErr').textContent = 'Verbindung verloren – verbinde neu …'; });
 socket.on('state', (s) => { if (s.code === code) render(s); });
+socket.on('private', (p) => { if (p.code === code) { me = p; if (state) render(state); } });
 
+// ---------- Aktionen ----------
 function vote(option) {
-  if (!state || state.phase !== 'voting') return;
-  const index = state.index;
-  socket.emit('player:vote', { index, option }, (res) => {
-    if (res.error) return ($('vqStatus').textContent = res.error);
-    myVote = { index, option };
-    render(state);
+  if (!state || !['voting', 'guess'].includes(state.phase)) return;
+  socket.emit('player:vote', { key: state.voteKey, option }, (res) => {
+    if (res.error) toast(res.error);
+    else if (navigator.vibrate) navigator.vibrate(15);
   });
 }
+$('vqOptions').onclick = $('gOptions').onclick = (e) => {
+  const b = e.target.closest('button[data-i]');
+  if (b) vote(+b.dataset.i);
+};
 
-function render(s) {
-  state = s;
-  $('vJoin').classList.add('hidden');
-  $('vGame').classList.remove('hidden');
-  $('gTitle').textContent = s.title;
-  $('gSub').textContent = `Spielcode ${s.code}`;
-  for (const v of ['vLobby', 'vVoting', 'vResults', 'vEnd', 'subForm']) $(v).classList.add('hidden');
-  const head = `Frage ${s.index + 1} von ${s.totalQuestions}`;
+$('claimGrid').onclick = (e) => {
+  const b = e.target.closest('button[data-i]');
+  if (!b || b.disabled) return;
+  $('claimErr').textContent = '';
+  socket.emit('player:claim', { option: +b.dataset.i }, (res) => {
+    if (res.error) $('claimErr').textContent = res.error;
+    else wantRename = false;
+  });
+};
+$('changeName').onclick = () => { wantRename = true; render(state); };
 
-  if (s.phase === 'lobby') {
-    $('vLobby').classList.remove('hidden');
-    $('lobbyPlayers').textContent = `${s.players} Spieler in der Lobby` + (s.mode === 'open' ? ` · ${s.submissions} Fragen eingereicht` : '');
-    $('subForm').classList.toggle('hidden', s.mode !== 'open');
-    renderMine();
-  } else if (s.phase === 'voting') {
-    $('vVoting').classList.remove('hidden');
-    $('vqHead').textContent = head;
-    $('vqText').textContent = s.question;
-    const chosen = myVote && myVote.index === s.index ? myVote.option : null;
-    const grid = $('vqOptions');
-    grid.classList.toggle('has-choice', chosen !== null);
-    grid.innerHTML = s.options
-      .map((o, i) => `<button class="vote-btn${chosen === i ? ' chosen' : ''}" data-i="${i}" style="background:${colorFor(i)}">${esc(o)}</button>`)
-      .join('');
-    $('vqStatus').textContent = chosen !== null
-      ? `✅ Abgestimmt (anonym) · ${s.voted} von ${s.players} fertig – du kannst noch umentscheiden`
-      : `${s.voted} von ${s.players} haben abgestimmt`;
-  } else if (s.phase === 'results') {
-    $('vResults').classList.remove('hidden');
-    $('rqHead').textContent = head;
-    $('rqText').textContent = s.question;
-    $('rqResults').innerHTML = resultsHTML(s.options, s.counts);
-  } else if (s.phase === 'end') {
-    $('vEnd').classList.remove('hidden');
-    $('endSummary').innerHTML = s.summary
-      .map((x, i) => `<div class="summary-item"><h3>${i + 1}. ${esc(x.question)}</h3>${resultsHTML(s.options, x.counts)}</div>`)
-      .join('');
-  }
-}
+$('wInput').oninput = () => { $('wLen').textContent = `${$('wInput').value.length} / 300`; };
+$('vWriting').onsubmit = (e) => {
+  e.preventDefault();
+  $('wErr').textContent = '';
+  socket.emit('player:answer', { text: $('wInput').value }, (res) => {
+    if (res.error) $('wErr').textContent = res.error;
+    else toast('Abgeschickt ✓');
+  });
+};
 
-// Eigene Fragen einreichen
-let mine = [];
 function renderMine() {
   $('mine').innerHTML = mine.length
     ? `<li class="muted" style="background:none;padding:0">Von dir eingereicht (${mine.length}):</li>` + mine.map((t) => `<li>✅ ${esc(t)}</li>`).join('')
@@ -177,13 +236,108 @@ $('subForm').onsubmit = (e) => {
     mine.push(...res.added);
     $('subInput').value = '';
     renderMine();
+    toast('Eingereicht ✓');
   });
 };
 
-$('vqOptions').onclick = (e) => {
-  const b = e.target.closest('button[data-i]');
-  if (b) vote(+b.dataset.i);
-};
+// ---------- Darstellung ----------
+function voteButtons(s) {
+  const chosen = me.voteKey === s.voteKey ? me.myVote : null;
+  return {
+    chosen,
+    html: s.options.map((o, i) => `<button class="vote-btn${chosen === i ? ' chosen' : ''}" data-i="${i}" style="background:${colorFor(i)}">${esc(o)}</button>`).join(''),
+  };
+}
+
+function render(s) {
+  const prev = state;
+  state = s;
+  document.body.className = `m-${s.mode}`;
+  $('vJoin').classList.add('hidden');
+  $('vGame').classList.remove('hidden');
+  $('gTitle').textContent = s.title;
+  $('gEyebrow').textContent = `${MODES[s.mode].emoji} ${MODES[s.mode].name}`;
+  $('codePill').textContent = `Code ${s.code}`;
+  $('codePill').classList.remove('hidden');
+
+  const said = s.mode === 'said';
+  const needName = said && (me.myName == null || wantRename) && ['lobby', 'writing', 'roundEnd'].includes(s.phase);
+  const view = needName ? 'vClaim' : {
+    lobby: 'vLobby', voting: 'vVoting', results: 'vResults', writing: 'vWriting',
+    guess: 'vGuess', reveal: 'vReveal', roundEnd: 'vRoundEnd', end: 'vEnd',
+  }[s.phase];
+  const changed = !prev || prev.phase !== s.phase || prev.voteKey !== s.voteKey || $(view).classList.contains('hidden');
+  for (const v of ['vClaim', 'vLobby', 'vVoting', 'vResults', 'vWriting', 'vGuess', 'vReveal', 'vRoundEnd', 'vEnd']) {
+    $(v).classList.toggle('hidden', v !== view);
+    if (v === view && changed) { $(v).classList.remove('view'); void $(v).offsetWidth; $(v).classList.add('view'); }
+  }
+
+  switch (view) {
+    case 'vClaim':
+      $('claimGrid').innerHTML = s.options
+        .map((o, i) => {
+          const taken = s.claimed.includes(i) && me.myName !== i;
+          return `<button type="button" class="vote-btn${taken ? ' taken' : ''}${me.myName === i ? ' chosen' : ''}" data-i="${i}" ${taken ? 'disabled' : ''} style="background:${colorFor(i)}">${taken ? '🔒 ' : ''}${esc(o)}</button>`;
+        })
+        .join('');
+      break;
+    case 'vLobby':
+      $('lobbyHello').textContent = said && me.myName != null ? `Hi ${s.options[me.myName]}! 👋` : 'Du bist drin!';
+      $('changeName').classList.toggle('hidden', !said);
+      $('lobbyPlayers').textContent = `${s.players} Spieler in der Lobby` + (s.mode === 'open' ? ` · ${s.submissions} Fragen eingereicht` : '');
+      $('subForm').classList.toggle('hidden', s.mode !== 'open');
+      renderMine();
+      break;
+    case 'vVoting': {
+      $('vqHead').textContent = `Frage ${s.index + 1} von ${s.totalQuestions}`;
+      $('vqText').textContent = s.question;
+      const vb = voteButtons(s);
+      $('vqOptions').innerHTML = vb.html;
+      $('vqOptions').classList.toggle('has-choice', vb.chosen !== null);
+      $('vqStatus').textContent = vb.chosen !== null
+        ? `✅ Abgestimmt (anonym) · ${s.voted} von ${s.players} fertig – du kannst noch umentscheiden`
+        : `${s.voted} von ${s.players} haben abgestimmt`;
+      break;
+    }
+    case 'vResults':
+      $('rqHead').textContent = `Frage ${s.index + 1} von ${s.totalQuestions}`;
+      $('rqText').textContent = s.question;
+      if (changed) $('rqResults').innerHTML = resultsHTML(s.options, s.counts);
+      break;
+    case 'vWriting':
+      $('wHead').textContent = `Runde ${s.round} · Deine Frage`;
+      $('wPrompt').textContent = me.prompt || '…';
+      if (changed) { $('wInput').value = me.myAnswer || ''; $('wInput').oninput(); }
+      $('wSent').classList.toggle('hidden', !me.myAnswer);
+      $('wBtn').textContent = me.myAnswer ? 'Änderung abschicken' : 'Abschicken';
+      $('wProgress').textContent = `${s.written} von ${s.writers} fertig`;
+      break;
+    case 'vGuess': {
+      $('gHead').textContent = `Runde ${s.round} · Aussage ${s.pickIndex + 1} von ${s.picksTotal}`;
+      $('gSecret').classList.toggle('hidden', !me.isMine);
+      if (changed) $('gQuote').innerHTML = quoteHTML(s.prompt, s.quote);
+      const vb = voteButtons(s);
+      $('gOptions').innerHTML = vb.html;
+      $('gOptions').classList.toggle('has-choice', vb.chosen !== null);
+      $('gStatus').textContent = vb.chosen !== null
+        ? `✅ Getippt (anonym) · ${s.voted} von ${s.players} – du kannst noch umentscheiden`
+        : `${s.voted} von ${s.players} haben getippt`;
+      break;
+    }
+    case 'vReveal':
+      $('xHead').textContent = `Runde ${s.round} · Aussage ${s.pickIndex + 1} von ${s.picksTotal}`;
+      if (changed) {
+        $('xQuote').innerHTML = quoteHTML(s.prompt, s.quote);
+        $('xReveal').innerHTML = revealHTML(s.options, s.author, s.counts);
+        $('xResults').innerHTML = resultsHTML(s.options, s.counts);
+        if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
+      }
+      break;
+    case 'vEnd':
+      if (changed) $('endSummary').innerHTML = summaryHTML(s);
+      break;
+  }
+}
 </script>
 </body>
 </html>

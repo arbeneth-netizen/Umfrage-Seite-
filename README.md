@@ -1,33 +1,37 @@
-# Anonyme Abstimmung – „Wer würde am ehesten …?“
+# Votum – „Wer würde am ehesten …?“
 
 Live-Abstimmungsspiel für die Gruppe: Du richtest Überschrift, Namen und Fragen ein,
 startest die Lobby, alle scannen den QR-Code und stimmen anonym am Handy ab.
 Nach jeder Frage gibt es ein Kreisdiagramm und eine Liste, wer wie viele Stimmen bekommen hat.
 
+## Spielmodi
+
+| Modus | So geht's |
+|---|---|
+| 🎤 **Klassisch** | Du wählst vorher die Fragen. Alle stimmen anonym ab, wer am ehesten … – danach Kreisdiagramm. |
+| ✍️ **Fragen-Mix** | Jeder tippt in der Lobby anonym eigene Fragen ein. Du nimmst davon so viele ins Spiel, wie du willst – plus Vorschläge und Archiv. |
+| 🕵️ **Wer hat's gesagt?** | Jeder wählt beim Beitreten seinen Namen und bekommt eine eigene Meinungsfrage. Nach dem Schreiben werden 1–4 Aussagen (vorher einstellbar) zufällig gezogen: Frage oben, Aussage als Zitat darunter. Die Gruppe diskutiert, tippt anonym, wer es war – dann wird der Autor aufgelöst. Beliebig viele Runden. |
+
 ## So läuft ein Spiel
 
-1. Startseite öffnen (`/`) – das ist deine Host-Ansicht (am besten auf Laptop/TV).
-2. **Überschrift** eintragen.
-3. **Spielmodus** wählen:
-   - 🎤 **Ich stelle die Fragen** – du wählst vorher alle Fragen aus.
-   - ✍️ **Alle reichen Fragen ein** – jeder tippt in der Lobby am Handy eigene Fragen ein (anonym).
-     Du nimmst davon so viele ins Spiel, wie du willst, plus beliebig viele Vorschläge.
-4. **Namen** eintragen (jeder Name bekommt automatisch eine eigene Farbe).
-5. **Fragen** auswählen: über 200 Vorschläge in Kategorien (Team & Training, Party & Alkohol,
-   Frauen & Dating, 🔞 Schamlos, Persönlich & Ehrlich, Peinlich, Geld & Zukunft, Krasse Szenarien,
-   Charakter & Macken), Suche, eigene Fragen, Reihenfolge anpassen.
-   Alles wird im Browser gespeichert – beim nächsten Mal ist es noch da.
+1. Startseite öffnen (`/`), Modus wählen.
+2. **Überschrift** und **Namen** eintragen (jeder Name bekommt eine eigene Farbe).
+3. **Fragen** auswählen: Vorschläge in Kategorien (über 200 Abstimmungsfragen, über 80 Meinungsfragen),
+   Suche, eigene Fragen, Archiv. Alles bleibt im Browser gespeichert.
+4. **Lobby starten** → QR-Code erscheint (antippen = groß anzeigen). Mitspieler scannen ihn
+   oder öffnen `/play.html` und geben den Code ein.
+5. Spielen – am Ende gibt es eine Übersicht über alle Ergebnisse.
 
-**📚 Archiv:** Jede eingetippte Frage (von dir oder den Spielern) wird automatisch im Archiv gespeichert,
-sortiert nach Session. Über „Archiv“ wählst du eine Session aus und übernimmst einzelne oder alle Fragen daraus.
-Das Archiv liegt im Browser des Host-Geräts – nutze also immer dasselbe Gerät/denselben Browser als Host.
-6. **Lobby starten** → QR-Code erscheint. Mitspieler scannen ihn (oder öffnen `/play.html` und geben den Code ein).
-7. **Spiel starten** → alle stimmen ab. Sobald alle abgestimmt haben, wird das Ergebnis automatisch gezeigt
-   (oder du klickst auf „Ergebnis zeigen“).
-8. Am Ende gibt es eine Übersicht über alle Fragen.
+**📚 Archiv:** Jede eingetippte Frage (von dir oder den Spielern) wird automatisch gespeichert,
+sortiert nach Session. Über „Archiv“ wählst du eine Session und übernimmst einzelne oder alle Fragen.
+Das Archiv liegt im Browser des Host-Geräts – nutze also immer dasselbe Gerät als Host.
 
-**Anonymität:** Der Server merkt sich nur eine zufällige Geräte-ID, damit jeder pro Frage nur einmal abstimmt.
-An die Geräte werden ausschließlich die Summen geschickt – niemand sieht, wer wen gewählt hat.
+**Anonymität:** Der Server merkt sich nur eine zufällige Geräte-ID, damit jeder pro Frage einmal abstimmt.
+An die Geräte gehen ausschließlich Summen – niemand sieht, wer wen gewählt hat.
+Bei „Wer hat's gesagt?“ wird nur der Autor einer *gezogenen* Aussage aufgelöst; alle anderen Aussagen bleiben geheim.
+
+**Als App installieren:** Seite auf dem Handy öffnen → Teilen → „Zum Home-Bildschirm“ (iPhone)
+bzw. Menü → „App installieren“ (Android).
 
 ## Lokal starten
 
